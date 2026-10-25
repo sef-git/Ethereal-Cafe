@@ -183,7 +183,7 @@ def analyze_revenue_forecasting():
 
         # Forecast next 7 periods
         forecasts = []
-        last_date = datetime.strptime(chronological[-1]["date"], "%Y-%m-%d") if chronological else datetime.today()
+        last_date = datetime.strptime(chronological[-1]["date"][:10], "%Y-%m-%d") if chronological else datetime.today()
         from datetime import timedelta
         for step in range(1, 8):
             f_x = n - 1 + step

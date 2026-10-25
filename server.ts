@@ -31,6 +31,17 @@ app.get('/api/python-analytics', (req: Request, res: Response) => {
 
   let stdoutData = '';
   let stderrData = '';
+  let finished = false;
+
+  const timer = setTimeout(() => {
+    if (!finished) {
+      finished = true;
+      try { pyProcess.kill('SIGKILL'); } catch {}
+      if (!res.headersSent) {
+        res.status(504).json({ error: 'Python execution timed out' });
+      }
+    }
+  }, 12000);
 
   pyProcess.stdout.on('data', (data) => {
     stdoutData += data.toString();
@@ -40,7 +51,20 @@ app.get('/api/python-analytics', (req: Request, res: Response) => {
     stderrData += data.toString();
   });
 
+  pyProcess.on('error', (err) => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to start Python process', details: err.message });
+    }
+  });
+
   pyProcess.on('close', (code) => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+
     if (code !== 0) {
       console.error('Python analytics process failed:', stderrData);
       return res.status(500).json({
@@ -68,15 +92,42 @@ app.post('/api/python-custom', (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Code string is required' });
   }
 
-  // Execute custom python script
+  // Execute custom python script with 10s execution timeout
   const py = spawn('python3', ['-c', code]);
   let output = '';
   let err = '';
+  let finished = false;
+
+  const timer = setTimeout(() => {
+    if (!finished) {
+      finished = true;
+      try { py.kill('SIGKILL'); } catch {}
+      if (!res.headersSent) {
+        res.json({
+          exitCode: -1,
+          output: output.trim(),
+          error: 'Execution exceeded 10-second limit and was terminated.'
+        });
+      }
+    }
+  }, 10000);
 
   py.stdout.on('data', (d) => { output += d.toString(); });
   py.stderr.on('data', (d) => { err += d.toString(); });
 
+  py.on('error', (e) => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    if (!res.headersSent) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   py.on('close', (exitCode) => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
     res.json({
       exitCode,
       output: output.trim(),
@@ -92,7 +143,10 @@ async function startServer() {
   if (isDev) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
