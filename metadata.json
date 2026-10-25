@@ -2,7 +2,5 @@
   "name": "Ethereal Cafe Analytics & Management",
   "description": "Executive analytics, real-time PC fleet monitoring, and financial intelligence for Ethereal Cafe backed by live Supabase data and Python analytics.",
   "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
