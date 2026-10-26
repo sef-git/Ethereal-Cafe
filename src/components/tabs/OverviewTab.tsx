@@ -19,6 +19,7 @@ import {
   Tooltip,
   BarChart,
   Bar,
+  CartesianGrid,
 } from 'recharts';
 import { useCafeData } from '../../context/CafeDataContext';
 
@@ -273,9 +274,10 @@ export const OverviewTab: React.FC = () => {
               <Clock className="h-4 w-4 text-blue-400" />
             </div>
 
-            <div className="h-48 w-full">
+            <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={hourlyData}>
+                <BarChart data={hourlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="hour" stroke="#64748b" fontSize={10} tickLine={false} />
                   <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
                   <Tooltip
@@ -286,7 +288,7 @@ export const OverviewTab: React.FC = () => {
                       fontSize: '11px',
                     }}
                   />
-                  <Bar dataKey="sessions" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="sessions" name="Sessions" fill="#2563eb" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

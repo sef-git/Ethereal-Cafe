@@ -7,9 +7,10 @@ import {
   Cpu,
   Clock,
   Users,
-  CheckCircle2,
-  AlertCircle,
-  Copy,
+  Download,
+  Activity,
+  Layers,
+  Sparkles,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -20,6 +21,10 @@ import {
   Tooltip,
   LineChart,
   Line,
+  CartesianGrid,
+  Legend,
+  AreaChart,
+  Area,
 } from 'recharts';
 import { useCafeData } from '../../context/CafeDataContext';
 
@@ -173,189 +178,493 @@ export const PythonAnalyticsTab: React.FC = () => {
     }
   };
 
+  // CSV Export for Offline Reporting
+  const handleExportCSV = () => {
+    if (!pythonAnalytics) return;
+
+    const lines: string[] = [];
+
+    // Header & Meta
+    lines.push('ETHEREAL CAFE - PYTHON 3.10 STATISTICAL ANALYTICS REPORT');
+    lines.push(`Generated On,${new Date().toISOString()}`);
+    lines.push(`Engine,${pythonAnalytics.engine || 'Python 3.10 Statistics & Regression'}`);
+    lines.push('');
+
+    // Section 1: Executive KPI Summary
+    lines.push('--- SECTION 1: EXECUTIVE MODEL KPIS ---');
+    lines.push('Metric,Value');
+    lines.push(`Total Sessions Analyzed,${pythonAnalytics.hourly.total_sessions_analyzed}`);
+    lines.push(`Peak Traffic Window,${pythonAnalytics.hourly.peak_hour}`);
+    lines.push(`Peak Hour Sessions Volume,${pythonAnalytics.hourly.peak_session_count}`);
+    lines.push(`Average Session Duration (mins),${pythonAnalytics.hourly.avg_duration_minutes}`);
+    lines.push(`Median Session Duration (mins),${pythonAnalytics.hourly.median_duration_minutes}`);
+    lines.push(`Duration Standard Deviation (mins),${pythonAnalytics.hourly.stdev_duration_minutes}`);
+    lines.push(`Historical Gross Income (PHP),${pythonAnalytics.forecast.total_gross_income}`);
+    lines.push(`Historical Net Profit (PHP),${pythonAnalytics.forecast.total_net_profit}`);
+    lines.push(`Net Profit Margin (%),${pythonAnalytics.forecast.net_profit_margin_pct}%`);
+    lines.push(`Linear Growth Slope,${pythonAnalytics.forecast.revenue_growth_slope}`);
+    lines.push(`Regression Trajectory,${pythonAnalytics.forecast.trend_direction}`);
+    lines.push(`Fleet Units Analyzed,${pythonAnalytics.units.units_count}`);
+    lines.push(`Top Performing Unit,${pythonAnalytics.units.top_pc}`);
+    lines.push(`Top Unit Revenue (PHP),${pythonAnalytics.units.top_pc_revenue}`);
+    lines.push('');
+
+    // Section 2: 24-Hour Hourly Demand & Revenue Heatmap
+    lines.push('--- SECTION 2: 24-HOUR HOURLY TRAFFIC & REVENUE DENSITY ---');
+    lines.push('Hour,Active Sessions,Total Revenue (PHP)');
+    pythonAnalytics.hourly.heatmap.forEach((row) => {
+      lines.push(`${row.hour},${row.sessions},${row.revenue.toFixed(2)}`);
+    });
+    lines.push('');
+
+    // Section 3: 7-Day OLS Regression Forecast
+    lines.push('--- SECTION 3: 7-DAY STATISTICAL REVENUE PROJECTION (OLS) ---');
+    lines.push('Forecast Date,Projected Gross (PHP),Projected Net Profit (PHP)');
+    pythonAnalytics.forecast.forecast_next_7_days.forEach((row) => {
+      lines.push(`${row.date},${row.projected_gross.toFixed(2)},${row.projected_net_profit.toFixed(2)}`);
+    });
+    lines.push('');
+
+    // Section 4: PC Fleet Utilization & Rankings
+    lines.push('--- SECTION 4: PC FLEET UTILIZATION & REVENUE RANKINGS ---');
+    lines.push('Rank,PC Number,Station Tier,Status,Zone Location,Total Sessions,Cumulative Revenue (PHP),Uptime Hours,Utilization Index (%)');
+    pythonAnalytics.units.units.forEach((pc, idx) => {
+      lines.push(
+        `${idx + 1},${pc.pc_number},${pc.type},${pc.status},"${pc.area_location}",${pc.total_sessions},${pc.total_revenue.toFixed(2)},${pc.total_hours},${pc.utilization_index}%`
+      );
+    });
+    lines.push('');
+
+    // Section 5: Customer RFM Cohorts & Segmentation
+    lines.push('--- SECTION 5: CUSTOMER RFM BEHAVIORAL COHORTS ---');
+    lines.push('Cohort Name,Total Patrons');
+    Object.entries(pythonAnalytics.rfm.segment_distribution).forEach(([seg, count]) => {
+      lines.push(`"${seg}",${count}`);
+    });
+    lines.push('');
+    lines.push('Customer ID,Full Name,Membership Tier,Sessions Attended,Total Spend (PHP),Latest Visit,RFM Classification');
+    pythonAnalytics.rfm.top_10_customers.forEach((c) => {
+      lines.push(
+        `${c.customer_id},"${c.name}",${c.membership},${c.sessions_count},${c.total_spend.toFixed(2)},${c.latest_visit || 'N/A'},"${c.segment}"`
+      );
+    });
+
+    const csvContent = '\uFEFF' + lines.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ethereal_cafe_python_analytics_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const hourlyHeatmap = pythonAnalytics?.hourly?.heatmap || [];
   const forecastSeries = pythonAnalytics?.forecast?.historical_series || [];
   const forecastFuture = pythonAnalytics?.forecast?.forecast_next_7_days || [];
   const topPcs = pythonAnalytics?.units?.units?.slice(0, 8) || [];
   const rfmSegments = pythonAnalytics?.rfm?.segment_distribution || {};
 
+  // Formatted data for RFM bar chart
+  const rfmChartData = Object.entries(rfmSegments).map(([name, count]) => ({
+    name,
+    count,
+  }));
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
+      {/* Header with Export Action */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-white">
               Python 3 Statistical Engine &amp; Intelligence
             </h1>
-            <span className="font-mono text-xs px-2 py-0.5 rounded border border-blue-500/30 bg-blue-950/40 text-blue-300">
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full border border-blue-500/30 bg-blue-950/40 text-blue-300 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
               CPython 3.10
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-400">
-            Native Python runtime analyzing live Supabase datasets: time-series regressions, probability curves, and customer RFM.
+            Native Python analytics &amp; statistical models executed against live Supabase tables for demand forecasting, regression, and cohort analysis.
           </p>
         </div>
 
-        <button
-          onClick={() => refreshPythonAnalytics()}
-          disabled={pythonLoading}
-          className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-950/40 px-3.5 py-1.5 text-xs font-medium text-blue-300 hover:bg-blue-900/40 hover:text-white transition-colors disabled:opacity-50"
-        >
-          <RotateCw className={`h-3.5 w-3.5 text-blue-400 ${pythonLoading ? 'animate-spin' : ''}`} />
-          <span>{pythonLoading ? 'Recomputing Python Model...' : 'Recalculate Python Models'}</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleExportCSV}
+            disabled={!pythonAnalytics}
+            className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white transition-all shadow-sm disabled:opacity-50"
+            title="Download full multi-section analytical report in CSV format"
+          >
+            <Download className="h-3.5 w-3.5 text-blue-400" />
+            <span>Export Analysis (CSV)</span>
+          </button>
+
+          <button
+            onClick={() => refreshPythonAnalytics()}
+            disabled={pythonLoading}
+            className="flex items-center gap-2 rounded-lg border border-blue-500/40 bg-blue-950/40 px-3.5 py-2 text-xs font-semibold text-blue-300 hover:bg-blue-900/50 hover:text-white transition-all shadow-sm disabled:opacity-50"
+          >
+            <RotateCw className={`h-3.5 w-3.5 text-blue-400 ${pythonLoading ? 'animate-spin' : ''}`} />
+            <span>{pythonLoading ? 'Recomputing...' : 'Recalculate Models'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Python Model Cards */}
+      {/* Python Model KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">Regression Trajectory</span>
-          <div className="mt-2 text-xl font-bold font-mono text-blue-400 truncate">
-            {pythonAnalytics?.forecast?.trend_direction || 'Upward / Expansion'}
+        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Regression Trajectory</span>
+              <TrendingUp className="h-3.5 w-3.5 text-blue-400" />
+            </div>
+            <div className="mt-2 text-xl font-bold font-mono text-blue-400 truncate">
+              {pythonAnalytics?.forecast?.trend_direction || 'Upward / Expansion'}
+            </div>
           </div>
-          <div className="mt-1 text-[11px] text-slate-500 font-mono">
-            Growth Slope: +{pythonAnalytics?.forecast?.revenue_growth_slope || '0.070'}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">Average Session Duration</span>
-          <div className="mt-2 text-xl font-bold font-mono text-white tabular-nums">
-            {pythonAnalytics?.hourly?.avg_duration_minutes || '178'} mins
-          </div>
-          <div className="mt-1 text-[11px] text-slate-500 font-mono">
-            &plusmn;{pythonAnalytics?.hourly?.stdev_duration_minutes || '58'} mins std. dev.
+          <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-center justify-between">
+            <span>Growth Slope:</span>
+            <span className="text-blue-300 font-semibold">+{pythonAnalytics?.forecast?.revenue_growth_slope ?? '0.070'}</span>
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">Top Revenue Unit</span>
-          <div className="mt-2 text-xl font-bold font-mono text-emerald-400">
-            {pythonAnalytics?.units?.top_pc || 'PC-01'}
+        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Avg Session Duration</span>
+              <Clock className="h-3.5 w-3.5 text-emerald-400" />
+            </div>
+            <div className="mt-2 text-xl font-bold font-mono text-white tabular-nums">
+              {pythonAnalytics?.hourly?.avg_duration_minutes || '185.5'} mins
+            </div>
           </div>
-          <div className="mt-1 text-[11px] text-slate-500 font-mono">
-            ₱{pythonAnalytics?.units?.top_pc_revenue?.toLocaleString() || '3,485'} generated
+          <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-center justify-between">
+            <span>Std Deviation:</span>
+            <span className="text-slate-300">&plusmn;{pythonAnalytics?.hourly?.stdev_duration_minutes || '85.0'} mins</span>
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">RFM VIP Champions</span>
-          <div className="mt-2 text-xl font-bold font-mono text-cyan-400">
-            {rfmSegments['VIP Champion'] || 32} Patrons
+        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>Top Revenue Unit</span>
+              <Cpu className="h-3.5 w-3.5 text-amber-400" />
+            </div>
+            <div className="mt-2 text-xl font-bold font-mono text-emerald-400">
+              {pythonAnalytics?.units?.top_pc || 'PC-01'}
+            </div>
           </div>
-          <div className="mt-1 text-[11px] text-slate-500 font-mono">
-            High retention &amp; LTV cohort
+          <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-center justify-between">
+            <span>Volume:</span>
+            <span className="text-emerald-400 font-semibold">₱{pythonAnalytics?.units?.top_pc_revenue?.toLocaleString() || '5,995'}</span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>RFM VIP Champions</span>
+              <Users className="h-3.5 w-3.5 text-cyan-400" />
+            </div>
+            <div className="mt-2 text-xl font-bold font-mono text-cyan-400">
+              {rfmSegments['VIP Champion'] || 32} Patrons
+            </div>
+          </div>
+          <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-center justify-between">
+            <span>Segment LTV:</span>
+            <span className="text-cyan-300 font-semibold">High Retention</span>
           </div>
         </div>
       </div>
 
-      {/* Main Visual Aids Row */}
+      {/* Visual Analytics Graphs Grid (Row 1) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Visual Aid 1: Hourly Distribution Heatmap */}
-        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-semibold text-white">Hourly Demand Density (24-Hour Cycle)</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Computed via Python `datetime` &amp; `statistics` from 1,140 sessions
-              </p>
+        {/* Graph 1: Hourly Demand Density */}
+        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-blue-400" />
+                <h2 className="text-sm font-semibold text-white">Hourly Demand Density (24-Hour Cycle)</h2>
+              </div>
+              <span className="text-[11px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-800/60">
+                Peak: {pythonAnalytics?.hourly?.peak_hour || '22:00'}
+              </span>
             </div>
-            <Clock className="h-4 w-4 text-blue-400" />
-          </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Computed distribution from live sessions table (00:00 to 23:00)
+            </p>
 
-          <div className="h-60 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hourlyHeatmap}>
-                <XAxis dataKey="hour" stroke="#64748b" fontSize={9} tickLine={false} interval={1} />
-                <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0c1322',
-                    borderColor: '#1e293b',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                  }}
-                  formatter={(val: any) => [val ?? 0, 'Active Sessions']}
-                />
-                <Bar dataKey="sessions" fill="#3b82f6" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hourlyHeatmap} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="hour" stroke="#64748b" fontSize={9} tickLine={false} interval={1} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0c1322',
+                      borderColor: '#1e293b',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                    }}
+                    formatter={(val: any, name: any) => [
+                      String(name).toLowerCase().includes('revenue') ? `₱${Number(val).toFixed(2)}` : val,
+                      String(name).toLowerCase().includes('revenue') ? 'Revenue' : 'Sessions',
+                    ]}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: '11px', paddingBottom: '12px' }}
+                  />
+                  <Bar dataKey="sessions" name="Sessions Volume" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
+            <span>Peak Hour Volume:</span>
+            <span className="text-blue-400 font-semibold">
+              {pythonAnalytics?.hourly?.peak_session_count || 54} sessions
+            </span>
           </div>
         </div>
 
-        {/* Visual Aid 2: Python 7-Day Forward Projection */}
-        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-semibold text-white">7-Day Statistical Revenue Projection</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Ordinary Least Squares (OLS) Linear Regression model
-              </p>
+        {/* Graph 2: 7-Day Statistical Revenue Projection */}
+        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-emerald-400" />
+                <h2 className="text-sm font-semibold text-white">7-Day Statistical Revenue Projection</h2>
+              </div>
+              <span className="text-[11px] font-mono text-emerald-400 px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/30">
+                OLS Regression
+              </span>
             </div>
-            <TrendingUp className="h-4 w-4 text-emerald-400" />
-          </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Projected daily gross income and net profit based on fitted time-series parameters
+            </p>
 
-          <div className="h-60 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={forecastFuture}>
-                <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `₱${v}`} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0c1322',
-                    borderColor: '#1e293b',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                  }}
-                  formatter={(val: any) => [
-                    val != null ? `₱${Number(val).toFixed(2)}` : '₱0.00',
-                  ]}
-                />
-                <Bar dataKey="projected_gross" name="Projected Gross" fill="#2563eb" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="projected_net_profit" name="Projected Net" fill="#10b981" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={forecastFuture} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `₱${v}`} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0c1322',
+                      borderColor: '#1e293b',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                    }}
+                    formatter={(val: any) => [
+                      val != null ? `₱${Number(val).toFixed(2)}` : '₱0.00',
+                    ]}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: '11px', paddingBottom: '12px' }}
+                  />
+                  <Bar dataKey="projected_gross" name="Projected Gross" fill="#2563eb" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="projected_net_profit" name="Projected Net" fill="#10b981" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
+            <span>Forecasted Profit Margin:</span>
+            <span className="text-emerald-400 font-semibold">
+              {pythonAnalytics?.forecast?.net_profit_margin_pct ?? 65.0}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Visual Analytics Graphs Grid (Row 2) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Graph 3: Historical Trajectory vs Linear Growth Trend */}
+        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-cyan-400" />
+                <h2 className="text-sm font-semibold text-white">Historical 14-Day Financial Trend</h2>
+              </div>
+              <span className="text-[11px] font-mono text-cyan-400 px-2 py-0.5 rounded bg-cyan-950/40 border border-cyan-500/30">
+                14-Day Cycles
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Historical daily gross revenue and net profit curve from earnings table
+            </p>
+
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={forecastSeries} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="pyGrossGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="pyProfitGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `₱${v}`} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0c1322',
+                      borderColor: '#1e293b',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                    }}
+                    formatter={(val: any) => [
+                      val != null ? `₱${Number(val).toFixed(2)}` : '₱0.00',
+                    ]}
+                  />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    iconType="circle"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: '11px', paddingBottom: '12px' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="gross"
+                    name="Daily Gross"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    fill="url(#pyGrossGrad)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="profit"
+                    name="Net Profit"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    fill="url(#pyProfitGrad)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
+            <span>Cumulative Sample Size:</span>
+            <span className="text-white font-semibold">
+              {pythonAnalytics?.forecast?.sample_points || 140} recorded cycles
+            </span>
+          </div>
+        </div>
+
+        {/* Graph 4: Customer RFM Behavioral Segmentation */}
+        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-purple-400" />
+                <h2 className="text-sm font-semibold text-white">Customer RFM Behavioral Cohorts</h2>
+              </div>
+              <span className="text-[11px] font-mono text-purple-400 px-2 py-0.5 rounded bg-purple-950/40 border border-purple-500/30">
+                Segment Model
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Recency, frequency, and monetary distribution across all registered patrons
+            </p>
+
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={rfmChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0c1322',
+                      borderColor: '#1e293b',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                    }}
+                    formatter={(val: any) => [`${val} Members`, 'Patron Count']}
+                  />
+                  <Bar dataKey="count" name="Patrons" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
+            <span>Total Registered Patrons:</span>
+            <span className="text-purple-300 font-semibold">
+              {pythonAnalytics?.rfm?.total_customers || 100} Profiles
+            </span>
           </div>
         </div>
       </div>
 
       {/* Top PC Units Utilization Leaderboard */}
       <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-sm font-semibold text-white">
-              PC Utilization &amp; ROI Leaderboard (Top 8 Stations)
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Ranked by cumulative session billings and hardware operating hours
-            </p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-blue-400" />
+            <div>
+              <h2 className="text-sm font-semibold text-white">
+                PC Fleet Utilization &amp; ROI Leaderboard (Top 8 Stations)
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Ranked by cumulative session revenues and hardware operating hours
+              </p>
+            </div>
           </div>
-          <Cpu className="h-4 w-4 text-blue-400" />
+          <span className="text-xs font-mono text-slate-400">40 Fleet Units</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {topPcs.map((pc, idx) => (
             <div
               key={pc.pc_id}
-              className="rounded-lg border border-slate-800 bg-[#060a12] p-3 text-xs"
+              className="rounded-lg border border-slate-800 bg-[#060a12] p-3 text-xs flex flex-col justify-between"
             >
-              <div className="flex items-center justify-between font-mono">
-                <span className="font-bold text-white">#{idx + 1} {pc.pc_number}</span>
-                <span className="text-blue-400 font-bold">{pc.utilization_index}% Util</span>
+              <div>
+                <div className="flex items-center justify-between font-mono">
+                  <span className="font-bold text-white">#{idx + 1} {pc.pc_number}</span>
+                  <span className="text-blue-400 font-bold">{pc.utilization_index}% Util</span>
+                </div>
+                <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                  <div
+                    className="bg-blue-500 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, Math.max(5, pc.utilization_index))}%` }}
+                  />
+                </div>
               </div>
-              <div className="mt-2 text-slate-400 space-y-1 font-mono text-[11px]">
+
+              <div className="mt-3 text-slate-400 space-y-1 font-mono text-[11px] pt-2 border-t border-slate-800/60">
                 <div className="flex justify-between">
                   <span>Revenue:</span>
                   <span className="text-emerald-400 font-bold tabular-nums">₱{pc.total_revenue}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Uptime:</span>
+                  <span>Operating Time:</span>
                   <span className="text-slate-300 tabular-nums">{pc.total_hours} hrs</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Zone:</span>
-                  <span className="text-slate-400 truncate max-w-[80px]">{pc.area_location}</span>
+                  <span className="text-slate-400 truncate max-w-[100px]">{pc.area_location}</span>
                 </div>
               </div>
             </div>
@@ -378,7 +687,7 @@ export const PythonAnalyticsTab: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-slate-500 mr-1">Templates:</span>
             {SAMPLE_PYTHON_SCRIPTS.map((s, idx) => (
               <button
@@ -386,7 +695,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                 onClick={() => handleSelectSnippet(idx)}
                 className={`px-2.5 py-1 rounded text-xs transition-colors ${
                   activeSnippet === idx
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-white font-medium'
                     : 'bg-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
@@ -420,7 +729,7 @@ export const PythonAnalyticsTab: React.FC = () => {
           <button
             onClick={handleRunPython}
             disabled={executing}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition-colors disabled:opacity-50 shadow-md"
           >
             <Play className={`h-3.5 w-3.5 fill-current ${executing ? 'animate-pulse' : ''}`} />
             <span>{executing ? 'Executing Python...' : 'Run Python Code'}</span>
