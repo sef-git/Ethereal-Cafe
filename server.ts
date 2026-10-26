@@ -106,19 +106,52 @@ app.post('/api/python-custom', (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Code string is required' });
   }
 
-  // Execute custom python script
+  // Execute custom python script with safety timeout
   const py = spawn('python3', ['-c', code]);
   let output = '';
   let err = '';
+  let responded = false;
 
-  py.stdout.on('data', (d) => { output += d.toString(); });
-  py.stderr.on('data', (d) => { err += d.toString(); });
+  const timer = setTimeout(() => {
+    if (!responded) {
+      responded = true;
+      try {
+        py.kill();
+      } catch {}
+      return res.json({
+        exitCode: 1,
+        output: output.trim(),
+        error: 'Script execution timeout (7s limit reached)',
+      });
+    }
+  }, 7000);
+
+  py.stdout.on('data', (d) => {
+    output += d.toString();
+  });
+  py.stderr.on('data', (d) => {
+    err += d.toString();
+  });
+
+  py.on('error', (spawnErr) => {
+    clearTimeout(timer);
+    if (responded) return;
+    responded = true;
+    res.json({
+      exitCode: 1,
+      output: '',
+      error: spawnErr.message,
+    });
+  });
 
   py.on('close', (exitCode) => {
+    clearTimeout(timer);
+    if (responded) return;
+    responded = true;
     res.json({
-      exitCode,
+      exitCode: exitCode ?? 0,
       output: output.trim(),
-      error: err.trim()
+      error: err.trim(),
     });
   });
 });
