@@ -149,21 +149,29 @@ export const PythonAnalyticsTab: React.FC = () => {
       setConsoleError(null);
 
       let stdout = '';
-      try {
-        const res = await fetch('/api/python-custom', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: customCode }),
-        });
+      const isBackendHost =
+        typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1' ||
+          window.location.hostname.includes('run.app'));
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.output && data.output.trim().length > 0) {
-            stdout = data.output.trim();
+      if (isBackendHost) {
+        try {
+          const res = await fetch('/api/python-custom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: customCode }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.output && data.output.trim().length > 0) {
+              stdout = data.output.trim();
+            }
           }
+        } catch {
+          // Fall back to live calculation from Supabase data
         }
-      } catch {
-        // Fall back to live calculation from Supabase data
       }
 
       if (!stdout) {

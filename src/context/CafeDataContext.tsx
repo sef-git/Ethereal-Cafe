@@ -49,6 +49,19 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [error, setError] = useState<string | null>(null);
 
   const fetchPythonAnalytics = useCallback(async () => {
+    // Only query backend API if running on a host that serves Node /api routes (localhost or Cloud Run dev app)
+    const isBackendHost =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('run.app'));
+
+    if (!isBackendHost) {
+      // On static or external domains (e.g. ethereal-cafe.ai.studio),
+      // statistical models are computed live from Supabase directly in memory.
+      return;
+    }
+
     try {
       setPythonLoading(true);
       const res = await fetch('/api/python-analytics?action=all');
@@ -59,7 +72,7 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
     } catch {
-      // Quietly maintain live computed analytics when backend is unreachable on external hosts
+      // Quietly maintain live computed analytics when backend is unreachable
     } finally {
       setPythonLoading(false);
     }

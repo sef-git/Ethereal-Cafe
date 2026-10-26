@@ -13,16 +13,65 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
-      // Suppress Vite HMR WebSocket connection errors in sandbox iframe environments
-      window.addEventListener('unhandledrejection', function (event) {
-        if (
-          event.reason &&
-          (String(event.reason.message || event.reason).includes('WebSocket') ||
-           String(event.reason.message || event.reason).includes('websocket'))
-        ) {
-          event.preventDefault();
+      // Mock window.WebSocket for Vite HMR in cloud preview and separate tabs to prevent WebSocket closed errors
+      (function () {
+        try {
+          var NativeWebSocket = window.WebSocket;
+          window.WebSocket = function (url, protocols) {
+            if (
+              protocols === 'vite-hmr' ||
+              (typeof url === 'string' &&
+                (url.includes('run.app') ||
+                  url.includes('ai.studio') ||
+                  url.includes('/@vite') ||
+                  url.includes('localhost:3000')))
+            ) {
+              return {
+                readyState: 1, // OPEN
+                send: function () {},
+                close: function () {},
+                addEventListener: function (type, listener) {
+                  if (type === 'open') {
+                    setTimeout(listener, 10);
+                  }
+                },
+                removeEventListener: function () {},
+                onopen: null,
+                onclose: null,
+                onerror: null,
+                onmessage: null,
+              };
+            }
+            return new NativeWebSocket(url, protocols);
+          };
+
+          // Suppress console.error for Vite HMR WebSocket connection failure
+          var origConsoleError = console.error;
+          console.error = function () {
+            if (
+              arguments[0] &&
+              typeof arguments[0] === 'string' &&
+              arguments[0].includes('[vite] failed to connect to websocket')
+            ) {
+              return;
+            }
+            origConsoleError.apply(console, arguments);
+          };
+
+          window.addEventListener('unhandledrejection', function (event) {
+            if (
+              event.reason &&
+              (String(event.reason.message || event.reason).includes('WebSocket') ||
+                String(event.reason.message || event.reason).includes('websocket'))
+            ) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          });
+        } catch (e) {
+          // ignore
         }
-      });
+      })();
     </script>
   </head>
   <body class="bg-[#05070D] text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
