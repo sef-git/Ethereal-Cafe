@@ -10,58 +10,9 @@ import {
   Payment,
   Earning,
 } from '../lib/supabase';
+import { computeClientAnalytics, PythonAnalyticsData } from '../lib/analyticsEngine';
 
-interface PythonAnalyticsData {
-  hourly?: {
-    total_sessions_analyzed: number;
-    peak_hour: string;
-    peak_session_count: number;
-    avg_duration_minutes: number;
-    median_duration_minutes: number;
-    stdev_duration_minutes: number;
-    heatmap: Array<{ hour: string; sessions: number; revenue: number }>;
-  };
-  units?: {
-    units_count: number;
-    avg_revenue_per_pc: number;
-    top_pc: string;
-    top_pc_revenue: number;
-    units: Array<{
-      pc_id: number;
-      pc_number: string;
-      type: string;
-      status: string;
-      area_location: string;
-      total_sessions: number;
-      total_revenue: number;
-      total_hours: number;
-      utilization_index: number;
-    }>;
-  };
-  forecast?: {
-    sample_points: number;
-    total_gross_income: number;
-    total_net_profit: number;
-    net_profit_margin_pct: number;
-    revenue_growth_slope: number;
-    trend_direction: string;
-    historical_series: Array<{ date: string; gross: number; expenses: number; profit: number }>;
-    forecast_next_7_days: Array<{ date: string; projected_gross: number; projected_net_profit: number }>;
-  };
-  rfm?: {
-    total_customers: number;
-    segment_distribution: Record<string, number>;
-    top_10_customers: Array<{
-      customer_id: number;
-      name: string;
-      membership: string;
-      sessions_count: number;
-      total_spend: number;
-      latest_visit: string | null;
-      segment: string;
-    }>;
-  };
-}
+export type { PythonAnalyticsData };
 
 interface CafeDataContextType {
   customers: Customer[];
@@ -101,11 +52,14 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       setPythonLoading(true);
       const res = await fetch('/api/python-analytics?action=all');
-      if (!res.ok) throw new Error(`Python API status: ${res.status}`);
-      const data = await res.json();
-      setPythonAnalytics(data);
-    } catch (err: unknown) {
-      console.warn('Python analytics fetch error:', err);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && !data.error && !data.fallback) {
+          setPythonAnalytics(data);
+        }
+      }
+    } catch {
+      // Quietly maintain live computed analytics when backend is unreachable on external hosts
     } finally {
       setPythonLoading(false);
     }
@@ -150,16 +104,30 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (payRes.error) throw new Error(`Payments: ${payRes.error.message}`);
       if (earnRes.error) throw new Error(`Earnings: ${earnRes.error.message}`);
 
-      setCustomers((custRes.data as Customer[]) || []);
-      setEmployees((empRes.data as Employee[]) || []);
-      setUnits((unitsRes.data as Unit[]) || []);
-      setProducts((prodRes.data as Product[]) || []);
-      setSessions((sessRes.data as Session[]) || []);
-      setSessionProducts((sessProdRes.data as SessionProduct[]) || []);
-      setPayments((payRes.data as Payment[]) || []);
-      setEarnings((earnRes.data as Earning[]) || []);
+      const custData = (custRes.data as Customer[]) || [];
+      const empData = (empRes.data as Employee[]) || [];
+      const unitsData = (unitsRes.data as Unit[]) || [];
+      const prodData = (prodRes.data as Product[]) || [];
+      const sessData = (sessRes.data as Session[]) || [];
+      const sessProdData = (sessProdRes.data as SessionProduct[]) || [];
+      const payData = (payRes.data as Payment[]) || [];
+      const earnData = (earnRes.data as Earning[]) || [];
 
-      // Trigger Python analytics in parallel
+      setCustomers(custData);
+      setEmployees(empData);
+      setUnits(unitsData);
+      setProducts(prodData);
+      setSessions(sessData);
+      setSessionProducts(sessProdData);
+      setPayments(payData);
+      setEarnings(earnData);
+
+      // Pre-compute analytics immediately from live Supabase data
+      // Guarantees that opening the site at any URL never has missing data
+      const localAnalytics = computeClientAnalytics(sessData, unitsData, earnData, custData);
+      setPythonAnalytics(localAnalytics);
+
+      // Background sync with Python 3 backend if hosted together
       fetchPythonAnalytics();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error connecting to Supabase';

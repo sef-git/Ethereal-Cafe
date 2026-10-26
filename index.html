@@ -12,6 +12,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Suppress Vite HMR WebSocket connection errors in sandbox iframe environments
+      window.addEventListener('unhandledrejection', function (event) {
+        if (
+          event.reason &&
+          (String(event.reason.message || event.reason).includes('WebSocket') ||
+           String(event.reason.message || event.reason).includes('websocket'))
+        ) {
+          event.preventDefault();
+        }
+      });
+    </script>
   </head>
   <body class="bg-[#05070D] text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
     <div id="root"></div>

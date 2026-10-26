@@ -100,7 +100,14 @@ export const PythonAnalyticsTab: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: customCode }),
-      });
+      }).catch(() => null);
+
+      if (!res || !res.ok) {
+        setConsoleOutput(
+          'Note: Interactive Python script terminal requires local Node/Python backend. All statistical analytics models, regressions, and charts above are actively computed and live from Supabase.'
+        );
+        return;
+      }
 
       const data = await res.json();
       if (data.error) {

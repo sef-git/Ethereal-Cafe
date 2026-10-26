@@ -1,10 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const SUPABASE_URL = 'https://hvtkxwzxjuoeewalptmq.supabase.co';
-export const SUPABASE_ANON_KEY =
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL || 'https://hvtkxwzxjuoeewalptmq.supabase.co';
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2dGt4d3p4anVvZWV3YWxwdG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNjE4NTMsImV4cCI6MjEwNTgzNzg1M30.DVn4CeI1MIO4lH6qfEMYKZd8JkpRb5bHT0pNOKnqp7A';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const SUPABASE_URL = supabaseUrl;
+export const SUPABASE_ANON_KEY = supabaseAnonKey;
 
 // Domain TypeScript Types matching Ethereal Cafe Supabase Schema (ERD)
 export interface Customer {

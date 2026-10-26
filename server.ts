@@ -24,13 +24,41 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
+interface AnalyticsCacheEntry {
+  data: unknown;
+  timestamp: number;
+}
+const analyticsCache = new Map<string, AnalyticsCacheEntry>();
+const CACHE_TTL_MS = 60 * 1000;
+
 // API: Run Python 3 Analytics Engine
 app.get('/api/python-analytics', (req: Request, res: Response) => {
   const action = (req.query.action as string) || 'all';
+
+  // Return fresh cache if available to respond in < 1ms
+  const cached = analyticsCache.get(action);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return res.json(cached.data);
+  }
+
   const pyProcess = spawn('python3', [path.join(__dirname, 'python_analytics.py'), action]);
 
   let stdoutData = '';
   let stderrData = '';
+  let responded = false;
+
+  const timer = setTimeout(() => {
+    if (!responded) {
+      responded = true;
+      try {
+        pyProcess.kill();
+      } catch {}
+      if (cached) {
+        return res.json(cached.data);
+      }
+      return res.status(200).json({ error: 'Python execution timed out', fallback: true });
+    }
+  }, 9000);
 
   pyProcess.stdout.on('data', (data) => {
     stdoutData += data.toString();
@@ -41,21 +69,31 @@ app.get('/api/python-analytics', (req: Request, res: Response) => {
   });
 
   pyProcess.on('close', (code) => {
+    clearTimeout(timer);
+    if (responded) return;
+    responded = true;
+
     if (code !== 0) {
-      console.error('Python analytics process failed:', stderrData);
-      return res.status(500).json({
-        error: 'Python analytics execution failed',
-        details: stderrData
+      console.warn('Python analytics process exited with non-zero code:', code, stderrData);
+      if (cached) {
+        return res.json(cached.data);
+      }
+      return res.status(200).json({
+        error: 'Python analytics unavailable',
+        details: stderrData,
+        fallback: true,
       });
     }
 
     try {
       const parsed = JSON.parse(stdoutData);
+      analyticsCache.set(action, { data: parsed, timestamp: Date.now() });
       return res.json(parsed);
     } catch {
-      return res.status(500).json({
+      if (cached) return res.json(cached.data);
+      return res.status(200).json({
         error: 'Invalid JSON returned from Python engine',
-        raw: stdoutData
+        fallback: true,
       });
     }
   });
@@ -92,7 +130,10 @@ async function startServer() {
   if (isDev) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
