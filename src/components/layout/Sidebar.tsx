@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Activity,
   Monitor,
@@ -25,7 +25,93 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen = false,
   onCloseMobile,
 }) => {
-  const { units, sessions, customers, products } = useCafeData();
+  const { units, sessions, customers, products, loading, error, refreshData } = useCafeData();
+
+  // Network connection & speed tracking
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+  const [isSlowNetwork, setIsSlowNetwork] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    const checkSpeed = () => {
+      if (typeof navigator !== 'undefined' && 'connection' in navigator) {
+        const conn = (navigator as unknown as {
+          connection?: {
+            effectiveType?: string;
+            rtt?: number;
+            downlink?: number;
+            addEventListener?: (e: string, fn: () => void) => void;
+            removeEventListener?: (e: string, fn: () => void) => void;
+          };
+        }).connection;
+
+        if (conn) {
+          const isSlow =
+            conn.effectiveType === 'slow-2g' ||
+            conn.effectiveType === '2g' ||
+            (typeof conn.rtt === 'number' && conn.rtt > 400) ||
+            (typeof conn.downlink === 'number' && conn.downlink < 0.7);
+          setIsSlowNetwork(isSlow);
+        }
+      }
+    };
+
+    checkSpeed();
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    const conn =
+      typeof navigator !== 'undefined' && 'connection' in navigator
+        ? (navigator as unknown as {
+            connection?: {
+              addEventListener?: (e: string, fn: () => void) => void;
+              removeEventListener?: (e: string, fn: () => void) => void;
+            };
+          }).connection
+        : null;
+
+    if (conn?.addEventListener) {
+      conn.addEventListener('change', checkSpeed);
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      if (conn?.removeEventListener) {
+        conn.removeEventListener('change', checkSpeed);
+      }
+    };
+  }, []);
+
+  // Determine light status phase:
+  // 1. Green ("Connected") - good internet connection
+  // 2. Yellow ("Connecting") - slow/bad internet connection or loading
+  // 3. Red ("No Connection") - no internet connection or unable to display
+  const hasConnectionError = !isOnline || (!!error && !loading);
+  let statusPhase: 'connected' | 'connecting' | 'no_connection' = 'connected';
+  if (hasConnectionError) {
+    statusPhase = 'no_connection';
+  } else if (loading || isSlowNetwork) {
+    statusPhase = 'connecting';
+  } else {
+    statusPhase = 'connected';
+  }
+
+  // Refresh Tenor embed script if mounted
+  useEffect(() => {
+    try {
+      const win = window as unknown as { tenor?: { embed?: () => void } };
+      if (win.tenor && typeof win.tenor.embed === 'function') {
+        win.tenor.embed();
+      }
+    } catch {
+      // Fallback img tag ensures immediate rendering
+    }
+  }, [statusPhase]);
 
   const navItems = [
     {
@@ -145,26 +231,128 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="pt-4 border-t border-slate-800/60 space-y-3 mt-6">
-        {/* Hatsune Miku Mascot - Embedded in Control Navigation Panel */}
-        <div className="rounded-xl border border-cyan-500/30 bg-gradient-to-b from-cyan-950/20 to-[#080d19] p-2.5 shadow-lg relative overflow-hidden group">
+        {/* Mascot & Connection Status Box */}
+        <div
+          className={`rounded-xl border p-2.5 shadow-lg relative overflow-hidden group transition-all duration-300 ${
+            statusPhase === 'connected'
+              ? 'border-cyan-500/30 bg-gradient-to-b from-cyan-950/25 to-[#080d19]'
+              : statusPhase === 'connecting'
+              ? 'border-amber-500/30 bg-gradient-to-b from-amber-950/25 to-[#080d19]'
+              : 'border-rose-500/30 bg-gradient-to-b from-rose-950/25 to-[#080d19]'
+          }`}
+        >
           <div className="flex items-center gap-2.5">
-            <div className="relative h-12 w-12 rounded-xl bg-cyan-950/40 border border-cyan-500/40 overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-inner">
-              <img
-                src="https://media.tenor.com/ouQzDmgC9CwAAAAj/miku-vocaloid.gif"
-                alt="Hatsune Miku Mascot"
-                className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-200"
-                loading="lazy"
-              />
+            {/* Mascot / Embedded GIF Container */}
+            <div
+              className={`relative h-13 w-13 rounded-xl overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-inner transition-colors border ${
+                statusPhase === 'connected'
+                  ? 'bg-cyan-950/40 border-cyan-500/40'
+                  : statusPhase === 'connecting'
+                  ? 'bg-amber-950/40 border-amber-500/40'
+                  : 'bg-rose-950/40 border-rose-500/40'
+              }`}
+            >
+              {/* Phase 1: Green / Connected - Hatsune Miku */}
+              {statusPhase === 'connected' && (
+                <img
+                  src="https://media.tenor.com/ouQzDmgC9CwAAAAj/miku-vocaloid.gif"
+                  alt="Hatsune Miku"
+                  className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-200"
+                  loading="lazy"
+                />
+              )}
+
+              {/* Phase 2: Yellow / Connecting - Anime Jamie GIF */}
+              {statusPhase === 'connecting' && (
+                <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                  <div
+                    className="tenor-gif-embed absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                    data-postid="9441519"
+                    data-share-method="host"
+                    data-aspect-ratio="1.46789"
+                    data-width="100%"
+                  >
+                    <a href="https://tenor.com/view/anime-jamie-zoe-cute-kawaii-gif-9441519">Anime Jamie GIF</a>
+                    from <a href="https://tenor.com/search/anime-gifs">Anime GIFs</a>
+                  </div>
+                  <img
+                    src="https://media.tenor.com/U1Z5bV2rDxQAAAAC/anime-jamie.gif"
+                    alt="Anime Jamie (Connecting)"
+                    className="h-full w-full object-contain rounded-lg"
+                  />
+                </div>
+              )}
+
+              {/* Phase 3: Red / No Connection - Ce2000 Sad Hatsune Miku GIF */}
+              {statusPhase === 'no_connection' && (
+                <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                  <div
+                    className="tenor-gif-embed absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                    data-postid="1327000440316577800"
+                    data-share-method="host"
+                    data-aspect-ratio="0.986547"
+                    data-width="100%"
+                  >
+                    <a href="https://tenor.com/view/ce2000-sad-hatsune-miku-gif-1327000440316577800">Ce2000 Sad Sticker</a>
+                    from <a href="https://tenor.com/search/ce2000-stickers">Ce2000 Stickers</a>
+                  </div>
+                  <img
+                    src="https://media.tenor.com/Empz3qXbSAgAAAAC/ce2000-sad.gif"
+                    alt="Ce2000 Sad Hatsune Miku (No Connection)"
+                    className="h-full w-full object-contain rounded-lg"
+                  />
+                </div>
+              )}
             </div>
+
+            {/* Text Information Stack */}
             <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
-                <span className="text-xs font-bold text-white tracking-wide truncate">
-                  Hatsune Miku
+              {/* Animated flickering light in original top position with connection status text */}
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span
+                    className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                      statusPhase === 'connected'
+                        ? 'bg-emerald-400'
+                        : statusPhase === 'connecting'
+                        ? 'bg-amber-400'
+                        : 'bg-rose-500'
+                    }`}
+                  />
+                  <span
+                    className={`relative inline-flex rounded-full h-2 w-2 shadow-sm animate-pulse ${
+                      statusPhase === 'connected'
+                        ? 'bg-emerald-400 shadow-emerald-400/80'
+                        : statusPhase === 'connecting'
+                        ? 'bg-amber-400 shadow-amber-400/80'
+                        : 'bg-rose-500 shadow-rose-500/80'
+                    }`}
+                  />
+                </span>
+                <span
+                  className={`text-[11px] font-bold font-mono tracking-wide ${
+                    statusPhase === 'connected'
+                      ? 'text-emerald-400'
+                      : statusPhase === 'connecting'
+                      ? 'text-amber-400'
+                      : 'text-rose-400'
+                  }`}
+                >
+                  {statusPhase === 'connected' && 'Connected'}
+                  {statusPhase === 'connecting' && 'Connecting'}
+                  {statusPhase === 'no_connection' && 'No Connection'}
                 </span>
               </div>
-              <span className="text-[10px] text-cyan-300/90 font-mono mt-0.5">Control Mascot</span>
-              <span className="text-[9px] text-slate-500 font-mono">Ethereal Terminal</span>
+
+              {/* Moved downward: Hatsune Miku */}
+              <span className="text-xs font-bold text-white tracking-wide truncate leading-tight">
+                Hatsune Miku
+              </span>
+
+              {/* Moved downward: Control Mascot */}
+              <span className="text-[10px] text-cyan-300/85 font-mono leading-tight mt-0.5 truncate">
+                Control Mascot
+              </span>
             </div>
           </div>
         </div>
