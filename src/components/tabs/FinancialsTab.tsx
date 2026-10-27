@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   Receipt,
   Search,
+  Sparkles,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -21,12 +22,15 @@ import {
   Cell,
 } from 'recharts';
 import { useCafeData } from '../../context/CafeDataContext';
+import { GraphDetailsModal } from '../common/GraphDetailsModal';
+import { generateGraphReport } from '../../lib/graphReports';
 
 const BLUE_PALETTE = ['#2563eb', '#38bdf8', '#3b82f6', '#60a5fa', '#93c5fd', '#1d4ed8'];
 
 export const FinancialsTab: React.FC = () => {
-  const { earnings, payments } = useCafeData();
+  const { earnings, payments, sessions, units, pythonAnalytics } = useCafeData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedGraph, setSelectedGraph] = useState<string | null>(null);
 
   // Calculations
   const totalGross = earnings.reduce((acc, curr) => acc + (Number(curr.gross_income) || 0), 0);
@@ -172,18 +176,27 @@ export const FinancialsTab: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Daily Profit Breakdown */}
         <div className="lg:col-span-2 rounded-xl border border-slate-800/80 bg-[#090d16] p-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div>
               <h2 className="text-sm font-semibold text-white">Daily Gross vs Expenses Breakdown</h2>
               <p className="text-xs text-slate-400 mt-0.5">Stacked financial volume by day</p>
             </div>
-            <div className="flex items-center gap-3 text-xs font-mono">
-              <span className="flex items-center gap-1.5 text-blue-400">
-                <span className="h-2 w-2 rounded bg-blue-600" /> Gross
-              </span>
-              <span className="flex items-center gap-1.5 text-rose-400">
-                <span className="h-2 w-2 rounded bg-rose-500" /> Expenses
-              </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedGraph('financials_breakdown')}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+              >
+                <Sparkles className="h-3 w-3 text-cyan-400" />
+                <span>View Graph Details</span>
+              </button>
+              <div className="hidden sm:flex items-center gap-3 text-xs font-mono">
+                <span className="flex items-center gap-1.5 text-blue-400">
+                  <span className="h-2 w-2 rounded bg-blue-600" /> Gross
+                </span>
+                <span className="flex items-center gap-1.5 text-rose-400">
+                  <span className="h-2 w-2 rounded bg-rose-500" /> Expenses
+                </span>
+              </div>
             </div>
           </div>
           <div className="h-64 w-full">
@@ -212,9 +225,15 @@ export const FinancialsTab: React.FC = () => {
         {/* Payment Channels Pie */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between gap-2 mb-2">
               <h2 className="text-sm font-semibold text-white">Payment Providers</h2>
-              <CreditCard className="h-4 w-4 text-blue-400" />
+              <button
+                onClick={() => setSelectedGraph('financials_providers')}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+              >
+                <Sparkles className="h-3 w-3 text-cyan-400" />
+                <span>View Graph Details</span>
+              </button>
             </div>
             <p className="text-xs text-slate-400 mb-3">Live channels from `payments` table</p>
 
@@ -320,6 +339,20 @@ export const FinancialsTab: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Embedded Deep-Dive Graph Details Modal */}
+      {selectedGraph && (
+        <GraphDetailsModal
+          report={generateGraphReport(selectedGraph, {
+            earnings,
+            sessions,
+            units,
+            payments,
+            pythonAnalytics,
+          })}
+          onClose={() => setSelectedGraph(null)}
+        />
+      )}
     </div>
   );
 };

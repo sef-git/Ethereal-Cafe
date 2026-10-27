@@ -1,4 +1,5 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import type { Request, Response } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
@@ -10,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3000;
 
 app.use(express.json());
 
@@ -20,7 +21,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
     status: 'ok',
     system: 'Ethereal Cafe Analytics Server',
     python: 'Python 3.10',
-    time: new Date().toISOString()
+    time: new Date().toISOString(),
   });
 });
 

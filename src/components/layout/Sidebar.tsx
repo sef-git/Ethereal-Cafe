@@ -8,16 +8,23 @@ import {
   Coffee,
   UserCheck,
   Terminal,
-  Database,
+  X,
 } from 'lucide-react';
 import { useCafeData } from '../../context/CafeDataContext';
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  activeTab,
+  setActiveTab,
+  isMobileOpen = false,
+  onCloseMobile,
+}) => {
   const { units, sessions, customers, products } = useCafeData();
 
   const navItems = [
@@ -69,24 +76,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       icon: Terminal,
       badge: 'v3.10',
     },
-    {
-      id: 'erd_schema',
-      label: 'ERD Architecture',
-      icon: Database,
-      badge: null,
-    },
   ];
 
-  return (
-    <aside className="w-64 md:w-68 shrink-0 h-full border-r border-slate-800/80 bg-[#060911] p-4 flex flex-col justify-between overflow-y-auto select-none">
+  const handleSelect = (id: string) => {
+    setActiveTab(id);
+    if (onCloseMobile) onCloseMobile();
+  };
+
+  const sidebarContent = (
+    <div className="flex flex-col justify-between h-full p-4 overflow-y-auto select-none">
       <div className="space-y-6">
         <div className="px-2 flex items-center justify-between">
           <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
             Control Navigation
           </p>
-          <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/40 border border-cyan-500/30 px-1.5 py-0.5 rounded">
-            Panel
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/40 border border-cyan-500/30 px-1.5 py-0.5 rounded">
+              Panel
+            </span>
+            {onCloseMobile && (
+              <button
+                onClick={onCloseMobile}
+                className="md:hidden p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         <nav className="space-y-1">
@@ -96,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => handleSelect(item.id)}
                 className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-medium transition-all ${
                   isActive
                     ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 shadow-sm'
@@ -153,6 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           </div>
         </div>
 
+        {/* Supabase Gateway Status Box without Live Data Mode / No Mock Data */}
         <div className="rounded-lg border border-slate-800 bg-[#090d16] p-3 text-xs text-slate-400">
           <div className="flex items-center justify-between text-[11px] font-medium text-slate-300 mb-1">
             <span>Supabase Gateway</span>
@@ -161,12 +178,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           <p className="text-[11px] text-slate-500 truncate font-mono">
             ref: hvtkxwzxjuoeewalptmq
           </p>
-          <div className="mt-2 text-[10px] text-slate-500 flex items-center justify-between">
-            <span>Live Data Mode</span>
-            <span className="text-blue-400 font-mono">No Mock Data</span>
-          </div>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Persistent Sidebar */}
+      <aside className="hidden md:flex w-64 md:w-68 shrink-0 h-full border-r border-slate-800/80 bg-[#060911]">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Drawer Overlay */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+            onClick={onCloseMobile}
+          />
+          <aside className="relative w-72 max-w-[85vw] h-full bg-[#060911] border-r border-slate-800 shadow-2xl z-10 flex flex-col">
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+    </>
   );
 };

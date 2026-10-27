@@ -27,6 +27,8 @@ import {
   Area,
 } from 'recharts';
 import { useCafeData } from '../../context/CafeDataContext';
+import { GraphDetailsModal } from '../common/GraphDetailsModal';
+import { generateGraphReport } from '../../lib/graphReports';
 
 const SAMPLE_PYTHON_SCRIPTS = [
   {
@@ -80,7 +82,17 @@ print(f"Variance: {statistics.variance(hours):.2f}")
 ];
 
 export const PythonAnalyticsTab: React.FC = () => {
-  const { pythonAnalytics, pythonLoading, refreshPythonAnalytics, sessions } = useCafeData();
+  const {
+    pythonAnalytics,
+    pythonLoading,
+    refreshPythonAnalytics,
+    sessions,
+    earnings,
+    payments,
+    units,
+  } = useCafeData();
+
+  const [selectedGraph, setSelectedGraph] = useState<string | null>(null);
 
   const [activeSnippet, setActiveSnippet] = useState(0);
   const [customCode, setCustomCode] = useState(SAMPLE_PYTHON_SCRIPTS[0].code);
@@ -394,14 +406,23 @@ export const PythonAnalyticsTab: React.FC = () => {
         {/* Graph 1: Hourly Demand Density */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-blue-400" />
                 <h2 className="text-sm font-semibold text-white">Hourly Demand Density (24-Hour Cycle)</h2>
               </div>
-              <span className="text-[11px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-800/60">
-                Peak: {pythonAnalytics?.hourly?.peak_hour || '22:00'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-800/60 hidden sm:inline">
+                  Peak: {pythonAnalytics?.hourly?.peak_hour || '22:00'}
+                </span>
+                <button
+                  onClick={() => setSelectedGraph('python_hourly')}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+                >
+                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  <span>View Graph Details</span>
+                </button>
+              </div>
             </div>
             <p className="text-xs text-slate-400 mb-4">
               Computed distribution from live sessions table (00:00 to 23:00)
@@ -448,14 +469,18 @@ export const PythonAnalyticsTab: React.FC = () => {
         {/* Graph 2: 7-Day Statistical Revenue Projection */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-emerald-400" />
                 <h2 className="text-sm font-semibold text-white">7-Day Statistical Revenue Projection</h2>
               </div>
-              <span className="text-[11px] font-mono text-emerald-400 px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/30">
-                OLS Regression
-              </span>
+              <button
+                onClick={() => setSelectedGraph('python_forecast')}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+              >
+                <Sparkles className="h-3 w-3 text-cyan-400" />
+                <span>View Graph Details</span>
+              </button>
             </div>
             <p className="text-xs text-slate-400 mb-4">
               Projected daily gross income and net profit based on fitted time-series parameters
@@ -505,14 +530,18 @@ export const PythonAnalyticsTab: React.FC = () => {
         {/* Graph 3: Historical Trajectory vs Linear Growth Trend */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-cyan-400" />
                 <h2 className="text-sm font-semibold text-white">Historical 14-Day Financial Trend</h2>
               </div>
-              <span className="text-[11px] font-mono text-cyan-400 px-2 py-0.5 rounded bg-cyan-950/40 border border-cyan-500/30">
-                14-Day Cycles
-              </span>
+              <button
+                onClick={() => setSelectedGraph('python_historical')}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+              >
+                <Sparkles className="h-3 w-3 text-cyan-400" />
+                <span>View Graph Details</span>
+              </button>
             </div>
             <p className="text-xs text-slate-400 mb-4">
               Historical daily gross revenue and net profit curve from earnings table
@@ -583,14 +612,18 @@ export const PythonAnalyticsTab: React.FC = () => {
         {/* Graph 4: Customer RFM Behavioral Segmentation */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-purple-400" />
                 <h2 className="text-sm font-semibold text-white">Customer RFM Behavioral Cohorts</h2>
               </div>
-              <span className="text-[11px] font-mono text-purple-400 px-2 py-0.5 rounded bg-purple-950/40 border border-purple-500/30">
-                Segment Model
-              </span>
+              <button
+                onClick={() => setSelectedGraph('python_rfm')}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+              >
+                <Sparkles className="h-3 w-3 text-cyan-400" />
+                <span>View Graph Details</span>
+              </button>
             </div>
             <p className="text-xs text-slate-400 mb-4">
               Recency, frequency, and monetary distribution across all registered patrons
@@ -764,6 +797,20 @@ export const PythonAnalyticsTab: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Embedded Deep-Dive Graph Details Modal */}
+      {selectedGraph && (
+        <GraphDetailsModal
+          report={generateGraphReport(selectedGraph, {
+            earnings,
+            sessions,
+            units,
+            payments,
+            pythonAnalytics,
+          })}
+          onClose={() => setSelectedGraph(null)}
+        />
+      )}
     </div>
   );
 };

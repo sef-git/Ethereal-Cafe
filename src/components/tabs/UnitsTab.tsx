@@ -7,6 +7,13 @@ import {
   X,
   Layers,
   Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Cpu,
+  DollarSign,
+  Activity,
+  User,
+  History,
 } from 'lucide-react';
 import { useCafeData } from '../../context/CafeDataContext';
 import { Unit } from '../../lib/supabase';
@@ -15,7 +22,8 @@ export const UnitsTab: React.FC = () => {
   const { units, sessions, pythonAnalytics } = useCafeData();
   const [selectedArea, setSelectedArea] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [activeUnit, setActiveUnit] = useState<Unit | null>(null);
+  const [expandedPcId, setExpandedPcId] = useState<number | null>(null);
+  const [historyModalUnit, setHistoryModalUnit] = useState<Unit | null>(null);
 
   // Group by area locations
   const areas = useMemo(() => {
@@ -57,13 +65,26 @@ export const UnitsTab: React.FC = () => {
     return map;
   }, [sessions]);
 
-  // Active unit sessions
-  const activeUnitSessions = useMemo(() => {
-    if (!activeUnit) return [];
-    return sessions.filter((s) => s.pc_id === activeUnit.pc_id).slice(0, 10);
-  }, [activeUnit, sessions]);
+  // Find maximum hours for utilization index calculation
+  const maxHoursInFleet = useMemo(() => {
+    let max = 1;
+    unitStatsMap.forEach((val) => {
+      if (val.hours > max) max = val.hours;
+    });
+    return max;
+  }, [unitStatsMap]);
 
-  const activeStats = activeUnit ? unitStatsMap.get(activeUnit.pc_id) : null;
+  // Sessions for modal history
+  const activeUnitSessions = useMemo(() => {
+    if (!historyModalUnit) return [];
+    return sessions.filter((s) => s.pc_id === historyModalUnit.pc_id).slice(0, 10);
+  }, [historyModalUnit, sessions]);
+
+  const activeStats = historyModalUnit ? unitStatsMap.get(historyModalUnit.pc_id) : null;
+
+  const handleCardClick = (pcId: number) => {
+    setExpandedPcId((prev) => (prev === pcId ? null : pcId));
+  };
 
   return (
     <div className="space-y-6">
@@ -71,10 +92,10 @@ export const UnitsTab: React.FC = () => {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            PC Fleet &amp; Hardware Matrix
+            PC Fleet &amp; Floor Matrix
           </h1>
           <p className="mt-1 text-xs text-slate-400">
-            Real-time telemetry and station performance for all {units.length} computer workstations across Ethereal Cafe.
+            Real-time status and telemetry for all {units.length} computer workstations. Click any PC matrix to view its live telemetry directly inside the card.
           </p>
         </div>
 
@@ -146,7 +167,7 @@ export const UnitsTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Units Matrix Grid */}
+      {/* Units Matrix Grid - Without Any Hovering Tooltip Window */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 pt-2">
         {filteredUnits.map((u) => {
           const stats = unitStatsMap.get(u.pc_id);
@@ -154,10 +175,12 @@ export const UnitsTab: React.FC = () => {
           const isInUse = u.status === 'In Use';
           const isAvailable = u.status === 'Available';
           const isMaint = u.status === 'Maintenance';
+          const isExpanded = expandedPcId === u.pc_id;
 
           // Current uptime calculation
           let currentUptimeDisplay = '0h 00m';
           let activeCustomerName: string | null = null;
+          let currentSessionPrice: number = 0;
 
           if (isInUse) {
             if (latestSession?.session_start && latestSession?.session_end) {
@@ -177,6 +200,7 @@ export const UnitsTab: React.FC = () => {
             if (latestSession?.customers) {
               activeCustomerName = `${latestSession.customers.first_name} ${latestSession.customers.last_name}`;
             }
+            currentSessionPrice = Number(latestSession?.price) || 0;
           } else if (isAvailable) {
             currentUptimeDisplay = 'Ready / Standby';
           } else {
@@ -185,32 +209,49 @@ export const UnitsTab: React.FC = () => {
 
           const hardwareSpec =
             u.type.includes('VIP')
-              ? 'RTX 4080S · i9-14900K · 240Hz'
+              ? 'RTX 4080S · i9-14900K · 240Hz Fast IPS'
               : u.type.includes('Esports')
-              ? 'RTX 4080 · Ryzen 7 7800X3D'
+              ? 'RTX 4080 · Ryzen 7 7800X3D · 360Hz'
               : u.type.includes('Streaming')
-              ? 'Dual PC · Cam Link 4K'
-              : 'RTX 4070 · i7-14700 · 165Hz';
+              ? 'Dual PC · Cam Link 4K · Shure SM7B'
+              : 'RTX 4070 · i7-14700 · 165Hz FHD';
 
-          return (
-            <div
-              key={u.pc_id}
-              onClick={() => setActiveUnit(u)}
-              className={`group relative cursor-pointer rounded-xl border p-4 transition-all duration-150 ${
-                isInUse
-                  ? 'border-emerald-500/40 bg-[#071318] hover:border-emerald-400 hover:shadow-lg hover:shadow-emerald-950/30'
-                  : isAvailable
-                  ? 'border-slate-800/80 bg-[#090d16] hover:border-blue-500/40 hover:bg-[#091120]'
-                  : 'border-slate-800 bg-[#0a0c10] hover:border-slate-600'
-              }`}
-            >
-              {/* Floating Hover Tooltip with Current Uptime */}
-              <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 opacity-0 group-hover:opacity-100 transition-all duration-200 z-40 transform group-hover:-translate-y-1">
-                <div className="rounded-xl border border-slate-700/90 bg-[#060a14]/98 p-3.5 shadow-2xl backdrop-blur-md text-xs">
-                  {/* Tooltip Header */}
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
-                    <span className="font-mono font-bold text-white text-sm">{u.pc_number}</span>
-                    <div className="flex items-center gap-1.5 font-mono text-[11px]">
+          const utilizationPct = Math.min(
+            100,
+            Math.round(((stats?.hours || 0) / maxHoursInFleet) * 100)
+          );
+
+          // WHEN EXPANDED: Spans 2 to 3 columns on larger screens so telemetry is organized neatly inside the matrix
+          if (isExpanded) {
+            return (
+              <div
+                key={u.pc_id}
+                className="col-span-2 sm:col-span-2 md:col-span-2 lg:col-span-3 rounded-2xl border-2 border-cyan-500/70 bg-gradient-to-b from-[#0a1426] to-[#060a14] p-5 shadow-2xl shadow-cyan-950/50 transition-all duration-200 text-xs"
+              >
+                {/* Station Card Header Inside Matrix */}
+                <div className="flex items-start justify-between border-b border-slate-800/80 pb-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-600/20 border border-cyan-500/40 text-cyan-400 shrink-0">
+                      <Monitor className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-base font-bold text-white tracking-wide">
+                          {u.pc_number}
+                        </span>
+                        <span className="font-mono text-[10px] px-2 py-0.5 rounded-full border border-cyan-500/30 bg-cyan-950/40 text-cyan-300">
+                          {u.type}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Zone: <strong className="text-slate-200 font-sans">{u.area_location}</strong> · Station ID #{u.pc_id}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* Status Pill */}
+                    <div className="flex items-center gap-1.5 font-mono text-[11px] px-2.5 py-1 rounded-full border border-slate-800 bg-[#040812]">
                       {isInUse ? (
                         <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                           <span className="relative flex h-2 w-2">
@@ -231,56 +272,155 @@ export const UnitsTab: React.FC = () => {
                         </span>
                       )}
                     </div>
-                  </div>
 
-                  {/* Tooltip Body: Live Uptime & Telemetry */}
-                  <div className="space-y-1.5 font-mono text-[11px]">
-                    <div className="flex justify-between items-center text-slate-300">
-                      <span className="text-slate-400">Current Uptime:</span>
-                      <span
-                        className={`font-semibold tabular-nums ${
-                          isInUse
-                            ? 'text-emerald-400'
-                            : isAvailable
-                            ? 'text-blue-300'
-                            : 'text-slate-400'
-                        }`}
-                      >
-                        {currentUptimeDisplay}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-slate-400">
-                      <span>Cumulative Hours:</span>
-                      <span className="text-slate-200 tabular-nums">
-                        {stats?.hours.toFixed(1) || '0.0'} hrs
-                      </span>
-                    </div>
-
-                    {activeCustomerName && (
-                      <div className="flex justify-between items-center text-slate-300 pt-1 border-t border-slate-800/80 font-sans">
-                        <span className="text-slate-400 text-[11px]">Active Gamer:</span>
-                        <span className="text-white font-medium truncate max-w-[130px]">
-                          {activeCustomerName}
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between items-center text-slate-400 pt-1 border-t border-slate-800/80 text-[10px]">
-                      <span>Spec:</span>
-                      <span className="text-blue-300 truncate max-w-[140px]">{hardwareSpec}</span>
-                    </div>
+                    {/* Collapse Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedPcId(null);
+                      }}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                      title="Collapse station view"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Arrow */}
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 bg-[#060a14] border-r border-b border-slate-700/90" />
-              </div>
+                {/* Telemetry Information Inside The Matrix Card */}
+                <div className="space-y-4">
+                  {/* Current Active Session & Uptime Status */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-slate-800 bg-[#050812] p-3">
+                      <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5 text-cyan-400" />
+                          Current Uptime
+                        </span>
+                        <span
+                          className={`font-semibold font-mono tabular-nums ${
+                            isInUse ? 'text-emerald-400' : 'text-slate-300'
+                          }`}
+                        >
+                          {currentUptimeDisplay}
+                        </span>
+                      </div>
 
+                      <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400 flex items-center gap-1">
+                          <User className="h-3.5 w-3.5 text-blue-400" />
+                          Active Gamer
+                        </span>
+                        <span className="text-white font-medium truncate max-w-[150px]">
+                          {activeCustomerName || 'None (Station Available)'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-800 bg-[#050812] p-3">
+                      <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+                          Lifetime Revenue
+                        </span>
+                        <span className="text-emerald-400 font-bold font-mono text-sm tabular-nums">
+                          ₱{stats?.revenue.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
+                        </span>
+                      </div>
+
+                      <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400">Total Run Time</span>
+                        <span className="text-slate-200 font-mono">
+                          {stats?.hours.toFixed(1) || '0.0'} operating hrs
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hardware Specification Banner */}
+                  <div className="rounded-xl border border-cyan-500/20 bg-cyan-950/15 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Cpu className="h-4 w-4 text-cyan-400 shrink-0" />
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-cyan-400 font-mono tracking-wider block">
+                          Hardware Configuration:
+                        </span>
+                        <span className="text-slate-200 font-medium text-xs font-mono">
+                          {hardwareSpec}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-[10px] text-slate-400 block font-mono">
+                        {stats?.sessions || 0} completed sessions
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Fleet Utilization Progress */}
+                  <div className="space-y-1.5 font-mono text-[11px]">
+                    <div className="flex items-center justify-between text-slate-400">
+                      <span className="flex items-center gap-1">
+                        <Activity className="h-3 w-3 text-blue-400" />
+                        Station Utilization Index
+                      </span>
+                      <span className="text-cyan-300 font-bold">{utilizationPct}%</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.max(8, utilizationPct)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action Buttons Inside Card */}
+                  <div className="pt-2 flex items-center justify-between gap-2 flex-wrap">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setHistoryModalUnit(u);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-medium transition-all shadow-sm"
+                    >
+                      <History className="h-3.5 w-3.5 text-blue-400" />
+                      <span>View Session History Logs</span>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedPcId(null);
+                      }}
+                      className="flex items-center gap-1 text-slate-400 hover:text-white text-xs font-medium px-2.5 py-1.5 rounded-lg hover:bg-slate-800/60 transition-colors"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                      <span>Collapse</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          // DEFAULT COMPACT MATRIX CARD (When Not Clicked) - Clean, Neat, Zero Hover Popup
+          return (
+            <div
+              key={u.pc_id}
+              onClick={() => handleCardClick(u.pc_id)}
+              className={`group cursor-pointer rounded-xl border p-4 transition-all duration-150 select-none ${
+                isInUse
+                  ? 'border-emerald-500/30 bg-[#071318] hover:border-emerald-400/80 hover:bg-[#081820]'
+                  : isAvailable
+                  ? 'border-slate-800/80 bg-[#090d16] hover:border-blue-500/40 hover:bg-[#0a1222]'
+                  : 'border-slate-800 bg-[#0a0c10] hover:border-slate-600'
+              }`}
+            >
               {/* Station Card Header with Dynamic Real-Time Status Indicator */}
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="font-mono text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                  <span className="font-mono text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">
                     {u.pc_number}
                   </span>
                   <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[120px]">
@@ -288,30 +428,26 @@ export const UnitsTab: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Dynamic Status Indicator */}
+                {/* Status Light */}
                 {isInUse ? (
                   <div className="flex items-center gap-1.5" title="Online: Active Session">
-                    <span className="relative flex h-3 w-3 items-center justify-center">
+                    <span className="relative flex h-2.5 w-2.5 items-center justify-center">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
                     </span>
                   </div>
                 ) : isAvailable ? (
                   <div className="flex items-center gap-1.5" title="Online: Standby">
-                    <span className="relative flex h-3 w-3 items-center justify-center">
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400/90 ring-2 ring-emerald-500/30"></span>
-                    </span>
+                    <span className="h-2 w-2 rounded-full bg-blue-400" />
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5" title="Offline: Maintenance">
-                    <span className="relative flex h-3 w-3 items-center justify-center">
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-600 ring-1 ring-slate-700"></span>
-                    </span>
+                    <span className="h-2 w-2 rounded-full bg-slate-600" />
                   </div>
                 )}
               </div>
 
-              {/* Station Metrics */}
+              {/* Station Metrics Inside Compact Matrix */}
               <div className="mt-4 space-y-1.5 border-t border-slate-800/60 pt-3 text-[11px] font-mono">
                 <div className="flex justify-between text-slate-400">
                   <span>Zone</span>
@@ -331,25 +467,45 @@ export const UnitsTab: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Total Rev.</span>
-                  <span className="text-emerald-400 tabular-nums">₱{stats?.revenue.toFixed(0) || 0}</span>
+                  <span className="text-emerald-400 tabular-nums">
+                    ₱{stats?.revenue.toFixed(0) || 0}
+                  </span>
                 </div>
               </div>
 
-              <div className="mt-3 flex items-center justify-between text-[10px] text-slate-500">
-                <span className={isInUse ? 'text-emerald-400 font-medium' : isAvailable ? 'text-blue-400' : 'text-slate-500'}>
-                  {isInUse ? '● Online (Active)' : isAvailable ? '● Standby' : '○ Offline'}
+              {/* Bottom Prompt: Click To Open Information Inside Matrix */}
+              <div className="mt-3.5 pt-2 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-500 group-hover:text-slate-300 transition-colors">
+                <span
+                  className={
+                    isInUse
+                      ? 'text-emerald-400 font-medium'
+                      : isAvailable
+                      ? 'text-blue-400 font-medium'
+                      : 'text-slate-500'
+                  }
+                >
+                  {isInUse ? '● Active' : isAvailable ? '● Standby' : '○ Offline'}
                 </span>
-                <span className="text-blue-400 group-hover:underline">Inspect →</span>
+                <span className="flex items-center gap-1 text-cyan-400 font-medium group-hover:underline">
+                  <span>Details</span>
+                  <ChevronDown className="h-3 w-3" />
+                </span>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Unit Detail Modal / Drawer */}
-      {activeUnit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-2xl rounded-2xl border border-slate-800 bg-[#090e1a] p-6 shadow-2xl">
+      {/* Optional Session History Modal when User clicks 'View Session History Logs' */}
+      {historyModalUnit && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn"
+          onClick={() => setHistoryModalUnit(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl rounded-2xl border border-slate-800 bg-[#090e1a] p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-3">
@@ -358,28 +514,28 @@ export const UnitsTab: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold text-white font-mono">{activeUnit.pc_number}</h2>
+                    <h2 className="text-lg font-bold text-white font-mono">{historyModalUnit.pc_number}</h2>
                     <span
                       className={`text-[11px] font-mono px-2 py-0.5 rounded border ${
-                        activeUnit.status === 'In Use'
+                        historyModalUnit.status === 'In Use'
                           ? 'border-blue-500/40 bg-blue-950/40 text-blue-300'
-                          : activeUnit.status === 'Available'
+                          : historyModalUnit.status === 'Available'
                           ? 'border-emerald-500/40 bg-emerald-950/40 text-emerald-300'
                           : 'border-amber-500/40 bg-amber-950/40 text-amber-300'
                       }`}
                     >
-                      {activeUnit.status}
+                      {historyModalUnit.status}
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {activeUnit.type} · {activeUnit.area_location}
+                    {historyModalUnit.type} · {historyModalUnit.area_location}
                   </p>
                 </div>
               </div>
 
               <button
-                onClick={() => setActiveUnit(null)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                onClick={() => setHistoryModalUnit(null)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -406,9 +562,9 @@ export const UnitsTab: React.FC = () => {
               <div className="rounded-xl border border-slate-800/80 bg-[#060a12] p-3 text-xs">
                 <span className="text-slate-500 block text-[11px]">Hardware Tier</span>
                 <span className="text-sm font-semibold text-white mt-1 block truncate">
-                  {activeUnit.type}
+                  {historyModalUnit.type}
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">ID #{activeUnit.pc_id}</span>
+                <span className="text-[10px] text-slate-400 font-mono">ID #{historyModalUnit.pc_id}</span>
               </div>
             </div>
 
@@ -416,7 +572,7 @@ export const UnitsTab: React.FC = () => {
             <div className="mt-5">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  Session History ({activeUnitSessions.length} Recent)
+                  Recent Session History ({activeUnitSessions.length} Recent)
                 </h3>
                 <span className="text-[11px] font-mono text-slate-500">From Supabase `sessions`</span>
               </div>
@@ -458,10 +614,10 @@ export const UnitsTab: React.FC = () => {
 
             <div className="mt-6 flex justify-end">
               <button
-                onClick={() => setActiveUnit(null)}
+                onClick={() => setHistoryModalUnit(null)}
                 className="px-4 py-2 rounded-lg bg-slate-800 text-xs font-medium text-white hover:bg-slate-700 transition-colors"
               >
-                Close Station Telemetry
+                Close Station Logs
               </button>
             </div>
           </div>

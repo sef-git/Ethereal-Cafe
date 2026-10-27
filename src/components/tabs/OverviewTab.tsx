@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   DollarSign,
   TrendingUp,
@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowUpRight,
+  Sparkles,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -22,6 +23,8 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { useCafeData } from '../../context/CafeDataContext';
+import { GraphDetailsModal } from '../common/GraphDetailsModal';
+import { generateGraphReport } from '../../lib/graphReports';
 
 export const OverviewTab: React.FC = () => {
   const {
@@ -29,32 +32,16 @@ export const OverviewTab: React.FC = () => {
     units,
     customers,
     earnings,
+    payments,
     sessionProducts,
     pythonAnalytics,
     loading,
     error,
   } = useCafeData();
 
-  if (loading && sessions.length === 0) {
-    return (
-      <div className="flex h-96 flex-col items-center justify-center space-y-3">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-        <p className="text-xs text-slate-400">Loading live data from Supabase...</p>
-      </div>
-    );
-  }
+  const [selectedGraph, setSelectedGraph] = useState<string | null>(null);
 
-  if (error && sessions.length === 0) {
-    return (
-      <div className="rounded-xl border border-rose-900/50 bg-rose-950/20 p-6 text-rose-300">
-        <div className="flex items-center gap-2 font-medium">
-          <AlertCircle className="h-5 w-5 text-rose-400" />
-          <span>Error loading data from Supabase</span>
-        </div>
-        <p className="mt-2 text-xs text-rose-400/80">{error}</p>
-      </div>
-    );
-  }
+  // Data is loaded and buffered by MainPanelBuffer covering the main panel
 
   // Calculate live aggregates
   const totalGrossIncome = earnings.reduce((sum, e) => sum + (Number(e.gross_income) || 0), 0);
@@ -195,20 +182,29 @@ export const OverviewTab: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Chart 1: Revenue & Profit Trend */}
         <div className="lg:col-span-2 rounded-xl border border-slate-800/80 bg-[#090d16] p-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div>
               <h2 className="text-sm font-semibold text-white">Revenue &amp; Net Profit Trajectory</h2>
               <p className="text-xs text-slate-400 mt-0.5">Historical earnings sequence from live ledger</p>
             </div>
-            <div className="flex items-center gap-4 text-xs font-mono">
-              <span className="flex items-center gap-1.5 text-blue-400">
-                <span className="h-2 w-2 rounded-full bg-blue-500" />
-                Gross
-              </span>
-              <span className="flex items-center gap-1.5 text-emerald-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Net Profit
-              </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedGraph('overview_revenue')}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm"
+              >
+                <Sparkles className="h-3 w-3 text-cyan-400" />
+                <span>View Graph Details</span>
+              </button>
+              <div className="hidden sm:flex items-center gap-3 text-xs font-mono">
+                <span className="flex items-center gap-1.5 text-blue-400">
+                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                  Gross
+                </span>
+                <span className="flex items-center gap-1.5 text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  Net Profit
+                </span>
+              </div>
             </div>
           </div>
           <div className="h-64 w-full">
@@ -264,14 +260,20 @@ export const OverviewTab: React.FC = () => {
         {/* Chart 2: Hourly Activity Distribution */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between gap-2 mb-4">
               <div>
                 <h2 className="text-sm font-semibold text-white">Peak Hourly Traffic</h2>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Python computed distribution (00:00 - 23:00)
                 </p>
               </div>
-              <Clock className="h-4 w-4 text-blue-400" />
+              <button
+                onClick={() => setSelectedGraph('overview_traffic')}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+              >
+                <Sparkles className="h-3 w-3 text-cyan-400" />
+                <span>View Graph Details</span>
+              </button>
             </div>
 
             <div className="h-64 w-full">
@@ -457,6 +459,20 @@ export const OverviewTab: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Embedded Deep-Dive Graph Details Modal */}
+      {selectedGraph && (
+        <GraphDetailsModal
+          report={generateGraphReport(selectedGraph, {
+            earnings,
+            sessions,
+            units,
+            payments,
+            pythonAnalytics,
+          })}
+          onClose={() => setSelectedGraph(null)}
+        />
+      )}
     </div>
   );
 };

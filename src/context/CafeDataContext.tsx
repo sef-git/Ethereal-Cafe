@@ -83,7 +83,11 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setLoading(true);
       setError(null);
 
-      // Fetch from Supabase tables concurrently
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        throw new Error('Offline: No internet connection detected.');
+      }
+
+      // Fetch from Supabase tables concurrently with natural pacing for buffer synchronization
       const [
         custRes,
         empRes,
@@ -106,6 +110,7 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         supabase.from('session_products').select('*, products(*)').limit(1000),
         supabase.from('payments').select('*').order('date', { ascending: false }).limit(1000),
         supabase.from('earnings').select('*, payments(*)').order('date', { ascending: false }).limit(500),
+        new Promise((resolve) => setTimeout(resolve, 800)),
       ]);
 
       if (custRes.error) throw new Error(`Customers: ${custRes.error.message}`);
