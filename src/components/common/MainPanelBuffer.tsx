@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RotateCcw, WifiOff, Sparkles } from 'lucide-react';
+import { RotateCcw, Loader2, AlertTriangle } from 'lucide-react';
 import { useCafeData } from '../../context/CafeDataContext';
 
 interface MainPanelBufferProps {
@@ -42,18 +42,6 @@ export const MainPanelBuffer: React.FC<MainPanelBufferProps> = ({ children }) =>
     };
   }, [refreshData]);
 
-  // Re-trigger Tenor embed script if present
-  useEffect(() => {
-    try {
-      const win = window as unknown as { tenor?: { embed?: () => void } };
-      if (win.tenor && typeof win.tenor.embed === 'function') {
-        win.tenor.embed();
-      }
-    } catch {
-      // Fallback <img> handles visual display
-    }
-  }, [loading, error, isOffline]);
-
   const handleRetry = useCallback(async () => {
     setIsRetrying(true);
     setIsOffline(typeof navigator !== 'undefined' ? !navigator.onLine : false);
@@ -72,34 +60,13 @@ export const MainPanelBuffer: React.FC<MainPanelBufferProps> = ({ children }) =>
     return (
       <div className="absolute inset-0 z-40 flex flex-col items-center justify-center p-4 sm:p-8 bg-[#05070D]/95 backdrop-blur-md text-slate-100 min-h-[500px]">
         <div className="max-w-md w-full flex flex-col items-center text-center space-y-5 animate-fadeIn">
-          {/* Error GIF: Ce2000 Sad Hatsune Miku */}
-          <div className="relative w-56 sm:w-64 max-w-full rounded-2xl border border-rose-500/40 bg-[#090b14] p-3 shadow-2xl shadow-rose-950/30 overflow-hidden group">
-            <div
-              className="tenor-gif-embed w-full flex items-center justify-center"
-              data-postid="1327000440316577800"
-              data-share-method="host"
-              data-aspect-ratio="0.986547"
-              data-width="100%"
-            >
-              <a
-                href="https://tenor.com/view/ce2000-sad-hatsune-miku-gif-1327000440316577800"
-                className="sr-only"
-              >
-                Ce2000 Sad Sticker
-              </a>
-              <img
-                src="https://media.tenor.com/Empz3qXbSAgAAAAC/ce2000-sad.gif"
-                alt="Ce2000 Sad Hatsune Miku"
-                className="w-full h-auto max-h-56 object-contain rounded-xl"
-              />
-            </div>
-            <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-950/80 border border-rose-500/40 text-[10px] font-mono text-rose-300">
-              <WifiOff className="h-3 w-3 text-rose-400" />
-              <span>Offline / Error</span>
-            </div>
+          {/* Standard Error Icon */}
+          <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-rose-500/40 bg-rose-950/20 shadow-2xl shadow-rose-950/40 text-rose-400 group">
+            <div className="absolute -inset-1 rounded-2xl bg-rose-500/20 blur-md pointer-events-none" />
+            <AlertTriangle className="relative h-10 w-10 sm:h-12 sm:w-12 text-rose-400 stroke-[1.75]" />
           </div>
 
-          {/* Exact required text */}
+          {/* Error Message */}
           <div className="space-y-1">
             <h3 className="text-base sm:text-lg font-bold font-mono tracking-wide text-rose-300">
               Loading error. Please reconnect.
@@ -128,31 +95,10 @@ export const MainPanelBuffer: React.FC<MainPanelBufferProps> = ({ children }) =>
     return (
       <div className="absolute inset-0 z-40 flex flex-col items-center justify-center p-4 sm:p-8 bg-[#05070D]/95 backdrop-blur-md text-slate-100 min-h-[500px]">
         <div className="max-w-md w-full flex flex-col items-center text-center space-y-5 animate-fadeIn">
-          {/* Buffering GIF: Anime Jamie */}
-          <div className="relative w-64 sm:w-72 max-w-full rounded-2xl border border-cyan-500/40 bg-[#090b14] p-3 shadow-2xl shadow-cyan-950/40 overflow-hidden group">
-            <div
-              className="tenor-gif-embed w-full flex items-center justify-center"
-              data-postid="9441519"
-              data-share-method="host"
-              data-aspect-ratio="1.46789"
-              data-width="100%"
-            >
-              <a
-                href="https://tenor.com/view/anime-jamie-zoe-cute-kawaii-gif-9441519"
-                className="sr-only"
-              >
-                Anime Jamie GIF
-              </a>
-              <img
-                src="https://media.tenor.com/U1Z5bV2rDxQAAAAC/anime-jamie.gif"
-                alt="Anime Jamie Buffering"
-                className="w-full h-auto max-h-52 object-contain rounded-xl"
-              />
-            </div>
-            <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-[10px] font-mono text-cyan-300">
-              <Sparkles className="h-3 w-3 text-cyan-400 animate-spin" />
-              <span>Syncing</span>
-            </div>
+          {/* Standard Buffering Icon */}
+          <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-cyan-500/40 bg-cyan-950/20 shadow-2xl shadow-cyan-950/40 text-cyan-400 group">
+            <div className="absolute -inset-1 rounded-2xl bg-cyan-500/20 blur-md pointer-events-none" />
+            <Loader2 className="relative h-10 w-10 sm:h-12 sm:w-12 animate-spin text-cyan-400 stroke-[1.75]" />
           </div>
 
           {/* Sequential Ellipses Text */}
@@ -173,6 +119,7 @@ export const MainPanelBuffer: React.FC<MainPanelBufferProps> = ({ children }) =>
       </div>
     );
   }
+
 
   // Once buffer is complete, render elements
   return <>{children}</>;

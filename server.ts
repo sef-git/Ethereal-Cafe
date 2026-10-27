@@ -11,9 +11,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json());
+
+// AI Studio Control Plane & Health Check routes
+app.get('/__aistudio_internal_control_plane/dev/status', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    ready: true,
+    env: process.env.NODE_ENV || 'development',
+    time: new Date().toISOString(),
+  });
+});
+
+app.get('/__aistudio_internal_control_plane/*', (_req: Request, res: Response) => {
+  res.json({ status: 'ok', ready: true });
+});
+
+app.get(['/healthz', '/_health'], (_req: Request, res: Response) => {
+  res.status(200).send('OK');
+});
 
 // API: Health check
 app.get('/api/health', (_req: Request, res: Response) => {
