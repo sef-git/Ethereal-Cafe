@@ -29,6 +29,7 @@ import {
 import { useCafeData } from '../../context/CafeDataContext';
 import { GraphDetailsModal } from '../common/GraphDetailsModal';
 import { generateGraphReport } from '../../lib/graphReports';
+import { ScenarioReportsSection } from '../dashboard/ScenarioReportsSection';
 
 const SAMPLE_PYTHON_SCRIPTS = [
   {
@@ -90,6 +91,10 @@ export const PythonAnalyticsTab: React.FC = () => {
     earnings,
     payments,
     units,
+    customers,
+    employees,
+    products,
+    sessionProducts,
   } = useCafeData();
 
   const [selectedGraph, setSelectedGraph] = useState<string | null>(null);
@@ -205,9 +210,9 @@ export const PythonAnalyticsTab: React.FC = () => {
     const lines: string[] = [];
 
     // Header & Meta
-    lines.push('ETHEREAL CAFE - PYTHON 3.10 STATISTICAL ANALYTICS REPORT');
+    lines.push('ETHEREAL CAFE - DATA ANALYSIS & BUSINESS INTELLIGENCE REPORT');
     lines.push(`Generated On,${new Date().toISOString()}`);
-    lines.push(`Engine,${pythonAnalytics.engine || 'Python 3.10 Statistics & Regression'}`);
+    lines.push(`Engine,${pythonAnalytics.engine || 'Statistical Analytics & Modeling'}`);
     lines.push('');
 
     // Section 1: Executive KPI Summary
@@ -274,7 +279,7 @@ export const PythonAnalyticsTab: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `ethereal_cafe_python_analytics_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `ethereal_cafe_data_analysis_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -300,15 +305,15 @@ export const PythonAnalyticsTab: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-white">
-              Python 3 Statistical Engine &amp; Intelligence
+              Data Analysis
             </h1>
             <span className="font-mono text-xs px-2.5 py-0.5 rounded-full border border-blue-500/30 bg-blue-950/40 text-blue-300 flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
-              CPython 3.10
+              CPython 3.10 Engine
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-400">
-            Native Python analytics &amp; statistical models executed against live Supabase tables for demand forecasting, regression, and cohort analysis.
+            Comprehensive analytical models, scenario audits, and data intelligence executed against live Supabase records.
           </p>
         </div>
 
@@ -320,7 +325,7 @@ export const PythonAnalyticsTab: React.FC = () => {
             title="Download full multi-section analytical report in CSV format"
           >
             <Download className="h-3.5 w-3.5 text-blue-400" />
-            <span>Export Analysis (CSV)</span>
+            <span>Export Data Analysis (CSV)</span>
           </button>
 
           <button
@@ -658,6 +663,19 @@ export const PythonAnalyticsTab: React.FC = () => {
         </div>
       </div>
 
+      {/* Dedicated Scenario Reports & Targeted Audits Section */}
+      <ScenarioReportsSection
+        sessions={sessions}
+        earnings={earnings}
+        payments={payments}
+        units={units}
+        customers={customers}
+        employees={employees}
+        products={products}
+        sessionProducts={sessionProducts}
+        onViewGraphDetails={(graphId) => setSelectedGraph(graphId)}
+      />
+
       {/* Top PC Units Utilization Leaderboard */}
       <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5">
         <div className="flex items-center justify-between mb-4">
@@ -807,6 +825,8 @@ export const PythonAnalyticsTab: React.FC = () => {
             units,
             payments,
             pythonAnalytics,
+            sessionProducts,
+            products,
           })}
           onClose={() => setSelectedGraph(null)}
         />

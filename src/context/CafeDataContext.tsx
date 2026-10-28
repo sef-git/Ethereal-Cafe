@@ -14,6 +14,64 @@ import { computeClientAnalytics, PythonAnalyticsData } from '../lib/analyticsEng
 
 export type { PythonAnalyticsData };
 
+// Calculate dynamic connection latency persisting between 1000ms and 3000ms (1 to 3 seconds)
+export const calculateConnectionDelay = (): number => {
+  if (typeof navigator === 'undefined') return 1500;
+
+  let delay = 1200; // Baseline on standard 4G/broadband connection (~1.2s)
+
+  const nav = navigator as unknown as {
+    connection?: {
+      effectiveType?: string;
+      rtt?: number;
+      downlink?: number;
+    };
+    mozConnection?: {
+      effectiveType?: string;
+      rtt?: number;
+      downlink?: number;
+    };
+    webkitConnection?: {
+      effectiveType?: string;
+      rtt?: number;
+      downlink?: number;
+    };
+  };
+
+  const conn = nav.connection || nav.mozConnection || nav.webkitConnection;
+
+  if (conn) {
+    if (conn.effectiveType === 'slow-2g') {
+      delay = 2950;
+    } else if (conn.effectiveType === '2g') {
+      delay = 2650;
+    } else if (conn.effectiveType === '3g') {
+      delay = 2000;
+    } else if (conn.effectiveType === '4g') {
+      delay = 1200;
+    }
+
+    if (typeof conn.rtt === 'number') {
+      // Map RTT (e.g. 30ms -> ~1100ms, 250ms -> ~1700ms, 600ms+ -> ~2800ms)
+      const rttScaled = 1000 + Math.min(2000, conn.rtt * 2.5);
+      delay = Math.max(delay, rttScaled);
+    }
+
+    if (typeof conn.downlink === 'number' && conn.downlink > 0) {
+      if (conn.downlink < 0.5) {
+        delay = Math.max(delay, 2850);
+      } else if (conn.downlink < 1.5) {
+        delay = Math.max(delay, 2200);
+      } else if (conn.downlink < 5.0) {
+        delay = Math.max(delay, 1600);
+      }
+    }
+  }
+
+  // Strictly clamp between 1000ms and 3000ms (1 to 3 seconds)
+  return Math.min(3000, Math.max(1000, Math.round(delay)));
+};
+
 interface CafeDataContextType {
   customers: Customer[];
   employees: Employee[];
@@ -83,11 +141,15 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setLoading(true);
       setError(null);
 
+      const connDelay = calculateConnectionDelay();
+
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        // Persist connecting/buffering attempt for 1 to 3 seconds based on connection before showing error
+        await new Promise((resolve) => setTimeout(resolve, connDelay));
         throw new Error('Offline: No internet connection detected.');
       }
 
-      // Fetch from Supabase tables concurrently with natural pacing for buffer synchronization
+      // Fetch from Supabase tables concurrently with connection delay persisting between 1 to 3 seconds
       const [
         custRes,
         empRes,
@@ -107,10 +169,13 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           .select('*, customers(*), units(*), employees(*)')
           .order('date', { ascending: false })
           .limit(1500),
-        supabase.from('session_products').select('*, products(*)').limit(1000),
+        supabase
+          .from('session_products')
+          .select('*, products(*), sessions(*, units(*), customers(*))')
+          .limit(1000),
         supabase.from('payments').select('*').order('date', { ascending: false }).limit(1000),
         supabase.from('earnings').select('*, payments(*)').order('date', { ascending: false }).limit(500),
-        new Promise((resolve) => setTimeout(resolve, 800)),
+        new Promise((resolve) => setTimeout(resolve, connDelay)),
       ]);
 
       if (custRes.error) throw new Error(`Customers: ${custRes.error.message}`);

@@ -9,6 +9,8 @@ import {
   UserCheck,
   Terminal,
   X,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import { useCafeData } from '../../context/CafeDataContext';
 
@@ -101,17 +103,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     statusPhase = 'connected';
   }
 
-  // Refresh Tenor embed script if mounted
-  useEffect(() => {
-    try {
-      const win = window as unknown as { tenor?: { embed?: () => void } };
-      if (win.tenor && typeof win.tenor.embed === 'function') {
-        win.tenor.embed();
-      }
-    } catch {
-      // Fallback img tag ensures immediate rendering
-    }
-  }, [statusPhase]);
 
   const navItems = [
     {
@@ -158,7 +149,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'python_engine',
-      label: 'Python Analytics',
+      label: 'Data Analysis',
       icon: Terminal,
       badge: 'v3.10',
     },
@@ -168,6 +159,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setActiveTab(id);
     if (onCloseMobile) onCloseMobile();
   };
+
+  // Re-run Tenor embed script if online when status phase shifts
+  useEffect(() => {
+    try {
+      const win = window as unknown as { tenor?: { embed?: () => void } };
+      if (win.tenor && typeof win.tenor.embed === 'function') {
+        win.tenor.embed();
+      }
+    } catch {
+      // Offline fallback ensures immediate local image display
+    }
+  }, [statusPhase]);
 
   const sidebarContent = (
     <div className="flex flex-col justify-between h-full p-4 overflow-y-auto select-none">
@@ -242,9 +245,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }`}
         >
           <div className="flex items-center gap-2.5">
-            {/* Mascot / Embedded GIF Container */}
+            {/* Mascot & Status Icon Container */}
             <div
-              className={`relative h-13 w-13 rounded-xl overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-inner transition-colors border ${
+              className={`relative h-14 w-14 rounded-xl overflow-hidden flex items-center justify-center shrink-0 p-0.5 shadow-inner transition-colors border ${
                 statusPhase === 'connected'
                   ? 'bg-cyan-950/40 border-cyan-500/40'
                   : statusPhase === 'connecting'
@@ -255,51 +258,70 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {/* Phase 1: Green / Connected - Hatsune Miku */}
               {statusPhase === 'connected' && (
                 <img
-                  src="https://media.tenor.com/ouQzDmgC9CwAAAAj/miku-vocaloid.gif"
+                  src="/assets/miku-vocaloid.gif"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      'https://media.tenor.com/ouQzDmgC9CwAAAAj/miku-vocaloid.gif';
+                  }}
                   alt="Hatsune Miku"
                   className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-200"
-                  loading="lazy"
+                  loading="eager"
                 />
               )}
 
-              {/* Phase 2: Yellow / Connecting - Anime Jamie GIF */}
+              {/* Phase 2: Yellow / Connecting - Anime Jamie GIF (postid="9441519") */}
               {statusPhase === 'connecting' && (
-                <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-lg">
                   <div
-                    className="tenor-gif-embed absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                    className="tenor-gif-embed w-full h-full opacity-0 absolute inset-0 pointer-events-none"
                     data-postid="9441519"
                     data-share-method="host"
                     data-aspect-ratio="1.46789"
                     data-width="100%"
                   >
-                    <a href="https://tenor.com/view/anime-jamie-zoe-cute-kawaii-gif-9441519">Anime Jamie GIF</a>
+                    <a href="https://tenor.com/view/anime-jamie-zoe-cute-kawaii-gif-9441519">
+                      Anime Jamie GIF
+                    </a>
                     from <a href="https://tenor.com/search/anime-gifs">Anime GIFs</a>
                   </div>
                   <img
-                    src="https://media.tenor.com/U1Z5bV2rDxQAAAAC/anime-jamie.gif"
-                    alt="Anime Jamie (Connecting)"
-                    className="h-full w-full object-contain rounded-lg"
+                    src="/assets/anime-jamie.gif"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        'https://media.tenor.com/U1Z5bV2rDxQAAAAC/anime-jamie.gif';
+                    }}
+                    alt="Connecting - Anime Jamie"
+                    className="w-full h-full object-cover rounded-lg"
+                    loading="eager"
                   />
                 </div>
               )}
 
-              {/* Phase 3: Red / No Connection - Ce2000 Sad Hatsune Miku GIF */}
+              {/* Phase 3: Red / No Connection - Ce2000 Sad Hatsune Miku GIF (postid="1327000440316577800")
+                  Allows offline display via local pre-bundled /assets/ce2000-sad.gif */}
               {statusPhase === 'no_connection' && (
-                <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-lg">
                   <div
-                    className="tenor-gif-embed absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                    className="tenor-gif-embed w-full h-full opacity-0 absolute inset-0 pointer-events-none"
                     data-postid="1327000440316577800"
                     data-share-method="host"
                     data-aspect-ratio="0.986547"
                     data-width="100%"
                   >
-                    <a href="https://tenor.com/view/ce2000-sad-hatsune-miku-gif-1327000440316577800">Ce2000 Sad Sticker</a>
+                    <a href="https://tenor.com/view/ce2000-sad-hatsune-miku-gif-1327000440316577800">
+                      Ce2000 Sad Sticker
+                    </a>
                     from <a href="https://tenor.com/search/ce2000-stickers">Ce2000 Stickers</a>
                   </div>
                   <img
-                    src="https://media.tenor.com/Empz3qXbSAgAAAAC/ce2000-sad.gif"
-                    alt="Ce2000 Sad Hatsune Miku (No Connection)"
-                    className="h-full w-full object-contain rounded-lg"
+                    src="/assets/ce2000-sad.gif"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        'https://media.tenor.com/Empz3qXbSAgAAAAC/ce2000-sad.gif';
+                    }}
+                    alt="No Connection - Ce2000 Sad Hatsune Miku"
+                    className="w-full h-full object-contain rounded-lg p-0.5"
+                    loading="eager"
                   />
                 </div>
               )}

@@ -55,26 +55,21 @@ export const MainPanelBuffer: React.FC<MainPanelBufferProps> = ({ children }) =>
   const hasConnectionError = isOffline || (!!error && !loading);
   const isBuffering = (loading || isRetrying) && !hasConnectionError;
 
-  // If there's an error establishing a good connection
+  // If there's no internet connection or error establishing connection
   if (hasConnectionError) {
     return (
       <div className="absolute inset-0 z-40 flex flex-col items-center justify-center p-4 sm:p-8 bg-[#05070D]/95 backdrop-blur-md text-slate-100 min-h-[500px]">
-        <div className="max-w-md w-full flex flex-col items-center text-center space-y-5 animate-fadeIn">
-          {/* Standard Error Icon */}
-          <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-rose-500/40 bg-rose-950/20 shadow-2xl shadow-rose-950/40 text-rose-400 group">
-            <div className="absolute -inset-1 rounded-2xl bg-rose-500/20 blur-md pointer-events-none" />
-            <AlertTriangle className="relative h-10 w-10 sm:h-12 sm:w-12 text-rose-400 stroke-[1.75]" />
+        <div className="max-w-md w-full flex flex-col items-center text-center space-y-6 animate-fadeIn">
+          {/* Standard Error Icon with Rose Glow */}
+          <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl border border-rose-500/40 bg-rose-950/20 shadow-2xl shadow-rose-950/60 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-3xl bg-rose-500/10 animate-ping opacity-25" />
+            <AlertTriangle className="h-14 w-14 sm:h-16 sm:w-16 text-rose-400 stroke-[2] animate-pulse" />
           </div>
 
-          {/* Error Message */}
-          <div className="space-y-1">
-            <h3 className="text-base sm:text-lg font-bold font-mono tracking-wide text-rose-300">
-              Loading error. Please reconnect.
-            </h3>
-            <p className="text-xs text-slate-400 max-w-sm">
-              The website could not establish a stable connection with the live Supabase gateway.
-            </p>
-          </div>
+          {/* Clean Error Message (extra text details removed) */}
+          <h3 className="text-base sm:text-lg font-bold font-mono tracking-wide text-rose-300">
+            Loading error. Please reconnect.
+          </h3>
 
           {/* Retry Button */}
           <button
@@ -94,32 +89,21 @@ export const MainPanelBuffer: React.FC<MainPanelBufferProps> = ({ children }) =>
   if (isBuffering) {
     return (
       <div className="absolute inset-0 z-40 flex flex-col items-center justify-center p-4 sm:p-8 bg-[#05070D]/95 backdrop-blur-md text-slate-100 min-h-[500px]">
-        <div className="max-w-md w-full flex flex-col items-center text-center space-y-5 animate-fadeIn">
-          {/* Standard Buffering Icon */}
-          <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-cyan-500/40 bg-cyan-950/20 shadow-2xl shadow-cyan-950/40 text-cyan-400 group">
-            <div className="absolute -inset-1 rounded-2xl bg-cyan-500/20 blur-md pointer-events-none" />
-            <Loader2 className="relative h-10 w-10 sm:h-12 sm:w-12 animate-spin text-cyan-400 stroke-[1.75]" />
+        <div className="max-w-md w-full flex flex-col items-center text-center space-y-6 animate-fadeIn">
+          {/* Standard Buffering Icon with Cyan Glow */}
+          <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl border border-cyan-500/40 bg-cyan-950/20 shadow-2xl shadow-cyan-950/60 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-3xl bg-cyan-500/10 animate-ping opacity-25" />
+            <Loader2 className="h-14 w-14 sm:h-16 sm:w-16 text-cyan-400 stroke-[2.2] animate-spin" />
           </div>
 
-          {/* Sequential Ellipses Text */}
-          <div className="space-y-1">
-            <h3 className="text-base sm:text-lg font-bold font-mono tracking-wide text-cyan-300 min-w-[240px]">
-              Loading. Please wait{'.'.repeat(dotCount)}
-            </h3>
-            <p className="text-xs text-slate-400 font-mono">
-              Synchronizing telemetry and database records with active internet connection
-            </p>
-          </div>
-
-          {/* Sleek connection progress indicator */}
-          <div className="w-48 h-1 rounded-full bg-slate-800 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 animate-pulse rounded-full w-full" />
-          </div>
+          {/* Sequential Ellipses Text (extra text details removed) */}
+          <h3 className="text-base sm:text-lg font-bold font-mono tracking-wide text-cyan-300 min-w-[240px]">
+            Loading. Please wait{'.'.repeat(dotCount)}
+          </h3>
         </div>
       </div>
     );
   }
-
 
   // Once buffer is complete, render elements
   return <>{children}</>;

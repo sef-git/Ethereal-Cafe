@@ -69,6 +69,7 @@ export interface SessionProduct {
   quantity: number;
   subtotal: number;
   products?: Product;
+  sessions?: Session;
 }
 
 export interface Payment {

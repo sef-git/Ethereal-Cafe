@@ -15,7 +15,7 @@ const TAB_NAMES: Record<string, string> = {
   customers: 'Customer Directory',
   inventory: 'Cafe Concessions & Menu',
   employees: 'Staff & Shift Roster',
-  python_engine: 'Python 3 Analytics Engine',
+  python_engine: 'Data Analysis',
 };
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onToggleMobileNav }) => {
