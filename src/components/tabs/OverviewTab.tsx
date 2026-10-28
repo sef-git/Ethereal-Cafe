@@ -182,9 +182,9 @@ export const OverviewTab: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Chart 1: Revenue & Profit Trend */}
         <div className="lg:col-span-2 rounded-xl border border-slate-800/80 bg-[#090d16] p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
             <div>
-              <h2 className="text-sm font-semibold text-white">Revenue &amp; Net Profit Trajectory</h2>
+              <h2 className="text-sm font-semibold text-white tracking-tight">Revenue &amp; Net Profit Trajectory</h2>
               <p className="text-xs text-slate-400 mt-0.5">Historical earnings sequence from live ledger</p>
             </div>
             <div className="flex items-center gap-3">
@@ -195,12 +195,12 @@ export const OverviewTab: React.FC = () => {
                 <Sparkles className="h-3 w-3 text-cyan-400" />
                 <span>View Graph Details</span>
               </button>
-              <div className="hidden sm:flex items-center gap-3 text-xs font-mono">
-                <span className="flex items-center gap-1.5 text-blue-400">
+              <div className="flex items-center gap-3 text-xs font-sans">
+                <span className="flex items-center gap-1.5 text-slate-300">
                   <span className="h-2 w-2 rounded-full bg-blue-500" />
                   Gross
                 </span>
-                <span className="flex items-center gap-1.5 text-emerald-400">
+                <span className="flex items-center gap-1.5 text-slate-300">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   Net Profit
                 </span>
@@ -209,7 +209,7 @@ export const OverviewTab: React.FC = () => {
           </div>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="grossGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -220,9 +220,11 @@ export const OverviewTab: React.FC = () => {
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(val) => `₱${val}`} />
+                <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `₱${val}`} />
                 <Tooltip
+                  cursor={false}
                   contentStyle={{
                     backgroundColor: '#0c1322',
                     borderColor: '#1e293b',
@@ -260,11 +262,11 @@ export const OverviewTab: React.FC = () => {
         {/* Chart 2: Hourly Activity Distribution */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/70 mb-4">
               <div>
-                <h2 className="text-sm font-semibold text-white">Peak Hourly Traffic</h2>
+                <h2 className="text-sm font-semibold text-white tracking-tight">Peak Hourly Traffic</h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Python computed distribution (00:00 - 23:00)
+                  Hourly traffic distribution (00:00 - 23:00)
                 </p>
               </div>
               <button
@@ -279,10 +281,11 @@ export const OverviewTab: React.FC = () => {
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hourlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="hour" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="hour" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#0c1322',
                       borderColor: '#1e293b',
@@ -290,7 +293,7 @@ export const OverviewTab: React.FC = () => {
                       fontSize: '11px',
                     }}
                   />
-                  <Bar dataKey="sessions" name="Sessions" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="sessions" name="Sessions" fill="#2563eb" stroke="none" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

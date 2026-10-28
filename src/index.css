@@ -31,3 +31,24 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #3b82f6;
 }
+
+/* Remove all browser outlines, white focus rings, and hover outlines from Recharts */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-wrapper *:focus,
+.recharts-surface:focus,
+.recharts-surface *:focus,
+.recharts-responsive-container,
+.recharts-responsive-container:focus,
+.recharts-layer:focus,
+svg:focus,
+svg *:focus {
+  outline: none !important;
+}
+
+.recharts-tooltip-cursor {
+  fill: transparent !important;
+  stroke: none !important;
+  outline: none !important;
+}
+

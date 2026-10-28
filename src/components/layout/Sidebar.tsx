@@ -269,31 +269,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 />
               )}
 
-              {/* Phase 2: Yellow / Connecting - Anime Jamie GIF (postid="9441519") */}
+              {/* Phase 2: Yellow / Connecting - Standard Buffering Icon */}
               {statusPhase === 'connecting' && (
-                <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-lg">
-                  <div
-                    className="tenor-gif-embed w-full h-full opacity-0 absolute inset-0 pointer-events-none"
-                    data-postid="9441519"
-                    data-share-method="host"
-                    data-aspect-ratio="1.46789"
-                    data-width="100%"
-                  >
-                    <a href="https://tenor.com/view/anime-jamie-zoe-cute-kawaii-gif-9441519">
-                      Anime Jamie GIF
-                    </a>
-                    from <a href="https://tenor.com/search/anime-gifs">Anime GIFs</a>
+                <div className="relative w-full h-full flex flex-col items-center justify-center bg-amber-950/20 rounded-lg">
+                  <div className="relative flex items-center justify-center">
+                    <span className="absolute h-7 w-7 rounded-full bg-amber-400/20 animate-ping" />
+                    <Loader2 className="h-6 w-6 text-amber-400 animate-spin relative z-10" />
                   </div>
-                  <img
-                    src="/assets/anime-jamie.gif"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        'https://media.tenor.com/U1Z5bV2rDxQAAAAC/anime-jamie.gif';
-                    }}
-                    alt="Connecting - Anime Jamie"
-                    className="w-full h-full object-cover rounded-lg"
-                    loading="eager"
-                  />
                 </div>
               )}
 

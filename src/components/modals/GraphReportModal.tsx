@@ -119,10 +119,11 @@ export const GraphReportModal: React.FC<GraphReportModalProps> = ({
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 12, right: 12, left: -15, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="hour" stroke="#64748b" fontSize={10} tickLine={false} interval={1} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="hour" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} interval={1} />
+                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#070b14',
                       borderColor: '#1e293b',
@@ -134,7 +135,7 @@ export const GraphReportModal: React.FC<GraphReportModalProps> = ({
                       String(name).toLowerCase().includes('revenue') ? 'Revenue' : 'Active Sessions',
                     ]}
                   />
-                  <Bar dataKey="sessions" name="Sessions Volume" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="sessions" name="Sessions Volume" fill="#3b82f6" stroke="none" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -188,10 +189,11 @@ export const GraphReportModal: React.FC<GraphReportModalProps> = ({
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 12, right: 12, left: -5, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(v) => `₱${v}`} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${v}`} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#070b14',
                       borderColor: '#1e293b',
@@ -201,8 +203,8 @@ export const GraphReportModal: React.FC<GraphReportModalProps> = ({
                     formatter={(val: any) => [`₱${Number(val).toFixed(2)}`]}
                   />
                   <Legend verticalAlign="top" align="right" wrapperStyle={{ fontSize: '11px', paddingBottom: '10px' }} />
-                  <Bar dataKey="projected_gross" name="Projected Gross" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="projected_net_profit" name="Projected Net" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="projected_gross" name="Projected Gross" fill="#2563eb" stroke="none" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="projected_net_profit" name="Projected Net" fill="#10b981" stroke="none" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -264,10 +266,11 @@ export const GraphReportModal: React.FC<GraphReportModalProps> = ({
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(v) => `₱${v}`} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${v}`} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#070b14',
                       borderColor: '#1e293b',
@@ -330,10 +333,11 @@ export const GraphReportModal: React.FC<GraphReportModalProps> = ({
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 12, right: 12, left: -15, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#070b14',
                       borderColor: '#1e293b',
@@ -342,7 +346,7 @@ export const GraphReportModal: React.FC<GraphReportModalProps> = ({
                     }}
                     formatter={(val: any) => [`${val} Members`, 'Patron Count']}
                   />
-                  <Bar dataKey="count" name="Patrons" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" name="Patrons" fill="#8b5cf6" stroke="none" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -384,10 +388,11 @@ export const GraphReportModal: React.FC<GraphReportModalProps> = ({
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 12, right: 12, left: -5, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(v) => `₱${v}`} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${v}`} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#070b14',
                       borderColor: '#1e293b',
@@ -397,8 +402,8 @@ export const GraphReportModal: React.FC<GraphReportModalProps> = ({
                     formatter={(val: any) => [`₱${Number(val).toFixed(2)}`]}
                   />
                   <Legend verticalAlign="top" align="right" wrapperStyle={{ fontSize: '11px', paddingBottom: '10px' }} />
-                  <Bar dataKey="gross" name="Gross Revenue" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expenses" name="Operating Expenses" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="gross" name="Gross Revenue" fill="#2563eb" stroke="none" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" name="Operating Expenses" fill="#f43f5e" stroke="none" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

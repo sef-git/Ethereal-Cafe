@@ -246,33 +246,49 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
         ========================================================================= */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-emerald-400" />
-                <h3 className="text-sm font-semibold text-white">
-                  Scenario 1: July 2026 High-Yield Sessions (&gt;₱100 Earnings &amp; Expenses)
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-white tracking-tight">
+                  Scenario 1: July 2026 High-Yield Sessions (&gt;₱100)
                 </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Gross income &amp; operating expenses &gt; ₱100 in 2026-07
+                </p>
               </div>
-              <button
-                onClick={() => onViewGraphDetails('scenario_1')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
-              >
-                <Sparkles className="h-3 w-3 text-cyan-400" />
-                <span>View Graph Details</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onViewGraphDetails('scenario_1')}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+                >
+                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  <span>View Graph Details</span>
+                </button>
+                <div className="flex items-center gap-2.5 text-xs">
+                  <span className="flex items-center gap-1 text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-blue-500" />
+                    Gross
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-rose-500" />
+                    Exp
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Net
+                  </span>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Sessions from 2026-07 where both gross income and operating expenses exceeded ₱100
-            </p>
 
             {/* Bar Chart comparing Gross, Expenses, Net Profit */}
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={scenario1Data.chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `₱${v}`} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${v}`} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#0c1322',
                       borderColor: '#1e293b',
@@ -281,16 +297,9 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                     }}
                     formatter={(val: any) => [`₱${Number(val).toFixed(2)}`]}
                   />
-                  <Legend
-                    verticalAlign="top"
-                    align="right"
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: '11px', paddingBottom: '12px' }}
-                  />
-                  <Bar dataKey="Gross" name="Gross Income" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="Expenses" name="Expenses" fill="#f43f5e" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="NetProfit" name="Net Operating Profit" fill="#10b981" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Gross" name="Gross Income" fill="#3b82f6" stroke="none" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Expenses" name="Expenses" fill="#f43f5e" stroke="none" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="NetProfit" name="Net Operating Profit" fill="#10b981" stroke="none" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -354,33 +363,39 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
         ========================================================================= */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-cyan-400" />
-                <h3 className="text-sm font-semibold text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-white tracking-tight">
                   Scenario 2: July 2026 Rene Navarro Shift Sessions
                 </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Gaming sessions involving Rene Navarro &amp; patrons in July 2026
+                </p>
               </div>
-              <button
-                onClick={() => onViewGraphDetails('scenario_2')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
-              >
-                <Sparkles className="h-3 w-3 text-cyan-400" />
-                <span>View Graph Details</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onViewGraphDetails('scenario_2')}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+                >
+                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  <span>View Graph Details</span>
+                </button>
+                <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                  <span className="h-2 w-2 rounded-full bg-cyan-500" />
+                  <span>Spend (PHP)</span>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              All gaming sessions involving staff member Rene Navarro and patrons in July 2026
-            </p>
 
             {/* Bar Chart showing Rene's session intake across July */}
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={scenario2Data.chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="sessionName" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `₱${v}`} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="sessionName" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${v}`} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#0c1322',
                       borderColor: '#1e293b',
@@ -389,14 +404,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                     }}
                     formatter={(val: any) => [`₱${Number(val).toFixed(2)}`, 'Session Fee']}
                   />
-                  <Legend
-                    verticalAlign="top"
-                    align="right"
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: '11px', paddingBottom: '12px' }}
-                  />
-                  <Bar dataKey="fee" name="Customer Spend (PHP)" fill="#06b6d4" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="fee" name="Customer Spend (PHP)" fill="#06b6d4" stroke="none" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -464,33 +472,39 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
         ========================================================================= */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <Monitor className="h-4 w-4 text-purple-400" />
-                <h3 className="text-sm font-semibold text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-white tracking-tight">
                   Scenario 3: July 2026 Fleet &amp; Customer Session Matrix
                 </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  110 July 2026 sessions mapped to PC units and customer profiles
+                </p>
               </div>
-              <button
-                onClick={() => onViewGraphDetails('scenario_3')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
-              >
-                <Sparkles className="h-3 w-3 text-cyan-400" />
-                <span>View Graph Details</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onViewGraphDetails('scenario_3')}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+                >
+                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  <span>View Graph Details</span>
+                </button>
+                <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                  <span className="h-2 w-2 rounded-full bg-purple-500" />
+                  <span>Sessions</span>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Distribution of all 110 sessions in July 2026 mapped to PC units and customer profiles
-            </p>
 
             {/* Bar Chart showing Station Tier Distribution */}
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={scenario3Data.tierChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="tier" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="tier" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#0c1322',
                       borderColor: '#1e293b',
@@ -499,7 +513,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                     }}
                     formatter={(val: any) => [`${val} Sessions`, 'Session Count']}
                   />
-                  <Bar dataKey="sessions" name="July Sessions" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="sessions" name="July Sessions" fill="#a855f7" stroke="none" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -603,33 +617,39 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
         ========================================================================= */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <Coffee className="h-4 w-4 text-amber-400" />
-                <h3 className="text-sm font-semibold text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-white tracking-tight">
                   Scenario 4: PC-04 Station &amp; Lucky Me Extra Hot Audit
                 </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Concession orders for Lucky Me Extra Hot noodles at PC-04
+                </p>
               </div>
-              <button
-                onClick={() => onViewGraphDetails('scenario_4')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
-              >
-                <Sparkles className="h-3 w-3 text-cyan-400" />
-                <span>View Graph Details</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onViewGraphDetails('scenario_4')}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+                >
+                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  <span>View Graph Details</span>
+                </button>
+                <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  <span>Orders</span>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Sessions where product is Lucky Me Pancit Canton Extra Hot and workstation is PC-04
-            </p>
 
             {/* Bar Chart comparing Concession Distribution across Units */}
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={scenario4Data.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="unit" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="unit" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#0c1322',
                       borderColor: '#1e293b',
@@ -642,6 +662,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                     dataKey="orders"
                     name="Extra Hot Noodle Orders"
                     fill="#f59e0b"
+                    stroke="none"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>

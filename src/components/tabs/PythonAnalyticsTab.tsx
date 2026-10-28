@@ -411,15 +411,12 @@ export const PythonAnalyticsTab: React.FC = () => {
         {/* Graph 1: Hourly Demand Density */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-400" />
-                <h2 className="text-sm font-semibold text-white">Hourly Demand Density (24-Hour Cycle)</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-white tracking-tight">Hourly Demand Density (24-Hour Cycle)</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Computed distribution from live sessions table (00:00 to 23:00)</p>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-800/60 hidden sm:inline">
-                  Peak: {pythonAnalytics?.hourly?.peak_hour || '22:00'}
-                </span>
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSelectedGraph('python_hourly')}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
@@ -427,19 +424,21 @@ export const PythonAnalyticsTab: React.FC = () => {
                   <Sparkles className="h-3 w-3 text-cyan-400" />
                   <span>View Graph Details</span>
                 </button>
+                <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                  <span>Sessions</span>
+                </div>
               </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Computed distribution from live sessions table (00:00 to 23:00)
-            </p>
 
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hourlyHeatmap} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="hour" stroke="#64748b" fontSize={9} tickLine={false} interval={1} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="hour" stroke="#64748b" fontSize={9} tickLine={false} axisLine={false} interval={1} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#0c1322',
                       borderColor: '#1e293b',
@@ -451,14 +450,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                       String(name).toLowerCase().includes('revenue') ? 'Revenue' : 'Sessions',
                     ]}
                   />
-                  <Legend
-                    verticalAlign="top"
-                    align="right"
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: '11px', paddingBottom: '12px' }}
-                  />
-                  <Bar dataKey="sessions" name="Sessions Volume" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="sessions" name="Sessions Volume" fill="#3b82f6" stroke="none" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -466,7 +458,7 @@ export const PythonAnalyticsTab: React.FC = () => {
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
             <span>Peak Hour Volume:</span>
             <span className="text-blue-400 font-semibold">
-              {pythonAnalytics?.hourly?.peak_session_count || 54} sessions
+              {pythonAnalytics?.hourly?.peak_session_count || 54} sessions ({pythonAnalytics?.hourly?.peak_hour || '22:00'})
             </span>
           </div>
         </div>
@@ -474,30 +466,40 @@ export const PythonAnalyticsTab: React.FC = () => {
         {/* Graph 2: 7-Day Statistical Revenue Projection */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-emerald-400" />
-                <h2 className="text-sm font-semibold text-white">7-Day Statistical Revenue Projection</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-white tracking-tight">7-Day Statistical Revenue Projection</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Projected daily gross and net profit based on fitted parameters</p>
               </div>
-              <button
-                onClick={() => setSelectedGraph('python_forecast')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
-              >
-                <Sparkles className="h-3 w-3 text-cyan-400" />
-                <span>View Graph Details</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedGraph('python_forecast')}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+                >
+                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  <span>View Graph Details</span>
+                </button>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-blue-600" />
+                    Gross
+                  </span>
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Net
+                  </span>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Projected daily gross income and net profit based on fitted time-series parameters
-            </p>
 
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={forecastFuture} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `₱${v}`} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${v}`} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#0c1322',
                       borderColor: '#1e293b',
@@ -508,15 +510,8 @@ export const PythonAnalyticsTab: React.FC = () => {
                       val != null ? `₱${Number(val).toFixed(2)}` : '₱0.00',
                     ]}
                   />
-                  <Legend
-                    verticalAlign="top"
-                    align="right"
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: '11px', paddingBottom: '12px' }}
-                  />
-                  <Bar dataKey="projected_gross" name="Projected Gross" fill="#2563eb" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="projected_net_profit" name="Projected Net" fill="#10b981" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="projected_gross" name="Projected Gross" fill="#2563eb" stroke="none" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="projected_net_profit" name="Projected Net" fill="#10b981" stroke="none" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -535,22 +530,31 @@ export const PythonAnalyticsTab: React.FC = () => {
         {/* Graph 3: Historical Trajectory vs Linear Growth Trend */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-cyan-400" />
-                <h2 className="text-sm font-semibold text-white">Historical 14-Day Financial Trend</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-white tracking-tight">Historical 14-Day Financial Trend</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Historical daily gross revenue and net profit curve</p>
               </div>
-              <button
-                onClick={() => setSelectedGraph('python_historical')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
-              >
-                <Sparkles className="h-3 w-3 text-cyan-400" />
-                <span>View Graph Details</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedGraph('python_historical')}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+                >
+                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  <span>View Graph Details</span>
+                </button>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-blue-500" />
+                    Gross
+                  </span>
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Profit
+                  </span>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Historical daily gross revenue and net profit curve from earnings table
-            </p>
 
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -565,10 +569,11 @@ export const PythonAnalyticsTab: React.FC = () => {
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `₱${v}`} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${v}`} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#0c1322',
                       borderColor: '#1e293b',
@@ -578,13 +583,6 @@ export const PythonAnalyticsTab: React.FC = () => {
                     formatter={(val: any) => [
                       val != null ? `₱${Number(val).toFixed(2)}` : '₱0.00',
                     ]}
-                  />
-                  <Legend
-                    verticalAlign="top"
-                    align="right"
-                    iconType="circle"
-                    iconSize={8}
-                    wrapperStyle={{ fontSize: '11px', paddingBottom: '12px' }}
                   />
                   <Area
                     type="monotone"
@@ -617,30 +615,34 @@ export const PythonAnalyticsTab: React.FC = () => {
         {/* Graph 4: Customer RFM Behavioral Segmentation */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-purple-400" />
-                <h2 className="text-sm font-semibold text-white">Customer RFM Behavioral Cohorts</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-white tracking-tight">Customer RFM Behavioral Cohorts</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Patron distribution by engagement tier</p>
               </div>
-              <button
-                onClick={() => setSelectedGraph('python_rfm')}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
-              >
-                <Sparkles className="h-3 w-3 text-cyan-400" />
-                <span>View Graph Details</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedGraph('python_rfm')}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+                >
+                  <Sparkles className="h-3 w-3 text-cyan-400" />
+                  <span>View Graph Details</span>
+                </button>
+                <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                  <span className="h-2 w-2 rounded-full bg-purple-500" />
+                  <span>Patrons</span>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Recency, frequency, and monetary distribution across all registered patrons
-            </p>
 
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={rfmChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} />
+                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                   <Tooltip
+                    cursor={false}
                     contentStyle={{
                       backgroundColor: '#0c1322',
                       borderColor: '#1e293b',
@@ -649,7 +651,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                     }}
                     formatter={(val: any) => [`${val} Members`, 'Patron Count']}
                   />
-                  <Bar dataKey="count" name="Patrons" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" name="Patrons" fill="#8b5cf6" stroke="none" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
