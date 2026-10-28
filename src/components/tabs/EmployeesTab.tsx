@@ -59,9 +59,6 @@ export const EmployeesTab: React.FC = () => {
           <h1 className="text-xl font-bold tracking-tight text-white">
             Staff &amp; Shift Operations
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
-            Personnel roster, shift assignments, and station session throughput from Supabase `employees` table.
-          </p>
         </div>
 
         <div className="flex items-center gap-3 text-xs font-mono text-slate-400">

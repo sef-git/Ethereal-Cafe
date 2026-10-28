@@ -168,9 +168,6 @@ export const FinancialsTab: React.FC = () => {
           <h1 className="text-xl font-bold tracking-tight text-white">
             Financials &amp; Earnings Intelligence
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
-            Certified accounting from Supabase `earnings` and `payments` tables with net profit margin calculations.
-          </p>
         </div>
 
         <button

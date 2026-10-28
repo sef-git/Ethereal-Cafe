@@ -85,9 +85,6 @@ export const OverviewTab: React.FC = () => {
           <h1 className="text-xl font-bold tracking-tight text-white">
             Ethereal Cafe Operations &amp; Intelligence
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
-            Real-time telemetry, session utilization, and financial accounting directly synchronized with Supabase.
-          </p>
         </div>
         <div className="flex items-center gap-3 text-xs text-slate-400">
           <span className="flex items-center gap-1.5">

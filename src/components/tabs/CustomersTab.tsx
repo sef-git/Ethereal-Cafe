@@ -80,9 +80,6 @@ export const CustomersTab: React.FC = () => {
           <h1 className="text-xl font-bold tracking-tight text-white">
             Customer Directory &amp; Loyalty Registry
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
-            Database records for all {customers.length} registered Ethereal Cafe patrons with membership rankings and lifetime spend.
-          </p>
         </div>
 
         <div className="flex items-center gap-3 text-xs font-mono text-slate-400">

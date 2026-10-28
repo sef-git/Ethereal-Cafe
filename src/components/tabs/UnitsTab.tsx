@@ -94,9 +94,6 @@ export const UnitsTab: React.FC = () => {
           <h1 className="text-xl font-bold tracking-tight text-white">
             PC Fleet &amp; Floor Matrix
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
-            Real-time status and telemetry for all {units.length} computer workstations. Click any PC matrix to view its live telemetry directly inside the card.
-          </p>
         </div>
 
         {/* Quick summary counts */}

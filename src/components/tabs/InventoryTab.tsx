@@ -68,9 +68,6 @@ export const InventoryTab: React.FC = () => {
           <h1 className="text-xl font-bold tracking-tight text-white">
             Cafe Concessions &amp; Inventory Menu
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
-            Real-time food, beverages, and peripheral merchandise stock synchronized with Supabase `products` and `session_products`.
-          </p>
         </div>
 
         <div className="flex items-center gap-3 text-xs font-mono text-slate-400">

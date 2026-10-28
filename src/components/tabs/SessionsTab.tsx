@@ -87,9 +87,6 @@ export const SessionsTab: React.FC = () => {
           <h1 className="text-xl font-bold tracking-tight text-white">
             Gaming Sessions Ledger
           </h1>
-          <p className="mt-1 text-xs text-slate-400">
-            Real-time registry of all {sessions.length} customer computer sessions with linked hardware, employees, and concessions.
-          </p>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono text-slate-400">

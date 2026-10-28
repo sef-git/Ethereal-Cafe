@@ -312,9 +312,6 @@ export const PythonAnalyticsTab: React.FC = () => {
               CPython 3.10 Engine
             </span>
           </div>
-          <p className="mt-1 text-xs text-slate-400">
-            Comprehensive analytical models, scenario audits, and data intelligence executed against live Supabase records.
-          </p>
         </div>
 
         <div className="flex items-center gap-2.5">
