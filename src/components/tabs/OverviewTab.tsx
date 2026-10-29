@@ -184,7 +184,7 @@ export const OverviewTab: React.FC = () => {
               <h2 className="text-sm font-semibold text-white tracking-tight">Revenue &amp; Net Profit Trajectory</h2>
               <p className="text-xs text-slate-400 mt-0.5">Historical earnings sequence from live ledger</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
               <button
                 onClick={() => setSelectedGraph('overview_revenue')}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm"
@@ -192,13 +192,13 @@ export const OverviewTab: React.FC = () => {
                 <Sparkles className="h-3 w-3 text-cyan-400" />
                 <span>View Graph Details</span>
               </button>
-              <div className="flex items-center gap-3 text-xs font-sans">
-                <span className="flex items-center gap-1.5 text-slate-300">
-                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+              <div className="flex items-center gap-3.5 sm:gap-4.5 text-xs font-sans pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
                   Gross
                 </span>
-                <span className="flex items-center gap-1.5 text-slate-300">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
                   Net Profit
                 </span>
               </div>

@@ -255,7 +255,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                   Gross income &amp; operating expenses &gt; ₱100 in 2026-07
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
                   onClick={() => onViewGraphDetails('scenario_1')}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
@@ -263,18 +263,18 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                   <Sparkles className="h-3 w-3 text-cyan-400" />
                   <span>View Graph Details</span>
                 </button>
-                <div className="flex items-center gap-2.5 text-xs">
-                  <span className="flex items-center gap-1 text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-blue-500" />
-                    Gross
+                <div className="flex items-center gap-3.5 sm:gap-4.5 text-xs font-sans pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                  <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
+                    <span>Gross</span>
                   </span>
-                  <span className="flex items-center gap-1 text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-rose-500" />
-                    Exp
+                  <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                    <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50" />
+                    <span>Exp</span>
                   </span>
-                  <span className="flex items-center gap-1 text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    Net
+                  <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+                    <span>Net</span>
                   </span>
                 </div>
               </div>
@@ -372,7 +372,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                   Gaming sessions involving Rene Navarro &amp; patrons in July 2026
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
                   onClick={() => onViewGraphDetails('scenario_2')}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
@@ -380,8 +380,8 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                   <Sparkles className="h-3 w-3 text-cyan-400" />
                   <span>View Graph Details</span>
                 </button>
-                <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                  <span className="h-2 w-2 rounded-full bg-cyan-500" />
+                <div className="flex items-center gap-1.5 text-xs text-slate-200 font-medium pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-cyan-500 shadow-sm shadow-cyan-500/50" />
                   <span>Spend (PHP)</span>
                 </div>
               </div>
@@ -481,7 +481,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                   110 July 2026 sessions mapped to PC units and customer profiles
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
                   onClick={() => onViewGraphDetails('scenario_3')}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
@@ -489,8 +489,8 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                   <Sparkles className="h-3 w-3 text-cyan-400" />
                   <span>View Graph Details</span>
                 </button>
-                <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                  <span className="h-2 w-2 rounded-full bg-purple-500" />
+                <div className="flex items-center gap-1.5 text-xs text-slate-200 font-medium pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50" />
                   <span>Sessions</span>
                 </div>
               </div>
@@ -626,7 +626,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                   Concession orders for Lucky Me Extra Hot noodles at PC-04
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
                   onClick={() => onViewGraphDetails('scenario_4')}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
@@ -634,8 +634,8 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                   <Sparkles className="h-3 w-3 text-cyan-400" />
                   <span>View Graph Details</span>
                 </button>
-                <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                <div className="flex items-center gap-1.5 text-xs text-slate-200 font-medium pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50" />
                   <span>Orders</span>
                 </div>
               </div>

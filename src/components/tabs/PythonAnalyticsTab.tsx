@@ -413,7 +413,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                 <h2 className="text-sm font-semibold text-white tracking-tight">Hourly Demand Density (24-Hour Cycle)</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Computed distribution from live sessions table (00:00 to 23:00)</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
                   onClick={() => setSelectedGraph('python_hourly')}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
@@ -421,8 +421,8 @@ export const PythonAnalyticsTab: React.FC = () => {
                   <Sparkles className="h-3 w-3 text-cyan-400" />
                   <span>View Graph Details</span>
                 </button>
-                <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                <div className="flex items-center gap-1.5 text-xs text-slate-200 font-medium pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
                   <span>Sessions</span>
                 </div>
               </div>
@@ -468,7 +468,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                 <h2 className="text-sm font-semibold text-white tracking-tight">7-Day Statistical Revenue Projection</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Projected daily gross and net profit based on fitted parameters</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
                   onClick={() => setSelectedGraph('python_forecast')}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
@@ -476,13 +476,13 @@ export const PythonAnalyticsTab: React.FC = () => {
                   <Sparkles className="h-3 w-3 text-cyan-400" />
                   <span>View Graph Details</span>
                 </button>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-blue-600" />
+                <div className="flex items-center gap-3.5 sm:gap-4.5 text-xs font-sans pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                  <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-600 shadow-sm shadow-blue-500/50" />
                     Gross
                   </span>
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
                     Net
                   </span>
                 </div>
@@ -532,7 +532,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                 <h2 className="text-sm font-semibold text-white tracking-tight">Historical 14-Day Financial Trend</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Historical daily gross revenue and net profit curve</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
                   onClick={() => setSelectedGraph('python_historical')}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
@@ -540,13 +540,13 @@ export const PythonAnalyticsTab: React.FC = () => {
                   <Sparkles className="h-3 w-3 text-cyan-400" />
                   <span>View Graph Details</span>
                 </button>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-blue-500" />
+                <div className="flex items-center gap-3.5 sm:gap-4.5 text-xs font-sans pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                  <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
                     Gross
                   </span>
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
                     Profit
                   </span>
                 </div>
@@ -617,7 +617,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                 <h2 className="text-sm font-semibold text-white tracking-tight">Customer RFM Behavioral Cohorts</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Patron distribution by engagement tier</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
                   onClick={() => setSelectedGraph('python_rfm')}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
@@ -625,8 +625,8 @@ export const PythonAnalyticsTab: React.FC = () => {
                   <Sparkles className="h-3 w-3 text-cyan-400" />
                   <span>View Graph Details</span>
                 </button>
-                <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                  <span className="h-2 w-2 rounded-full bg-purple-500" />
+                <div className="flex items-center gap-1.5 text-xs text-slate-200 font-medium pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50" />
                   <span>Patrons</span>
                 </div>
               </div>

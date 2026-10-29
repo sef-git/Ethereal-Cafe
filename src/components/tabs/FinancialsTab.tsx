@@ -266,13 +266,13 @@ export const FinancialsTab: React.FC = () => {
               </button>
 
               {/* Simplistic Dots Legend */}
-              <div className="flex items-center gap-3 text-xs font-sans pl-1">
-                <span className="flex items-center gap-1.5 text-slate-300">
-                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+              <div className="flex items-center gap-3.5 sm:gap-4.5 text-xs font-sans pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
                   <span>Gross</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-slate-300">
-                  <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+                <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                  <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50" />
                   <span>Expenses</span>
                 </span>
               </div>
