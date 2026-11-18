@@ -114,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'main_interface',
-      label: 'Add New',
+      label: 'Search / Add New',
       icon: PlusCircle,
       badge: null,
     },
