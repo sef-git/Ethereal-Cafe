@@ -455,10 +455,22 @@ export const OverviewTab: React.FC = () => {
                         <td className="py-3 text-slate-400">{s.date}</td>
                         <td className="py-3 text-right text-emerald-400 tabular-nums">₱{s.price}</td>
                         <td className="py-3 text-right font-sans">
-                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400">
-                            <CheckCircle2 className="h-3 w-3" />
-                            {s.payment_status}
-                          </span>
+                          {s.payment_status === 'Paid' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400">
+                              <CheckCircle2 className="h-3 w-3" />
+                              {s.payment_status}
+                            </span>
+                          ) : s.payment_status === 'Pending' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] text-amber-400">
+                              <Clock className="h-3 w-3" />
+                              {s.payment_status}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] text-rose-400">
+                              <AlertCircle className="h-3 w-3" />
+                              {s.payment_status}
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );

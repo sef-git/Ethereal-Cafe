@@ -11,6 +11,7 @@ import {
   X,
   Loader2,
   AlertTriangle,
+  PlusCircle,
 } from 'lucide-react';
 import { useCafeData } from '../../context/CafeDataContext';
 
@@ -112,6 +113,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: null,
     },
     {
+      id: 'main_interface',
+      label: 'Add New',
+      icon: PlusCircle,
+      badge: null,
+    },
+    {
       id: 'units',
       label: 'PC Fleet & Floor',
       icon: Monitor,
@@ -194,7 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        <nav className="flex-1 flex flex-col justify-evenly gap-1.5 py-3 min-h-[380px]">
+        <nav className="flex-1 flex flex-col justify-evenly gap-1 py-2.5 min-h-[380px]">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -202,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => handleSelect(item.id)}
-                className={`group flex w-full items-center justify-between rounded-xl px-3.5 py-3 lg:py-3.5 text-[13px] lg:text-sm font-medium transition-all ${
+                className={`group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 lg:py-3 text-[13px] lg:text-sm font-medium transition-all ${
                   isActive
                     ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 shadow-sm'
                     : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'

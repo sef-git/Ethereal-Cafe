@@ -12,6 +12,7 @@ import { CustomersTab } from './components/tabs/CustomersTab';
 import { InventoryTab } from './components/tabs/InventoryTab';
 import { EmployeesTab } from './components/tabs/EmployeesTab';
 import { PythonAnalyticsTab } from './components/tabs/PythonAnalyticsTab';
+import { MainInterfaceTab } from './components/tabs/MainInterfaceTab';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('overview');
@@ -57,6 +58,7 @@ export default function App() {
                   transition={{ duration: 0.18, ease: 'easeOut' }}
                 >
                   {activeTab === 'overview' && <OverviewTab />}
+                  {activeTab === 'main_interface' && <MainInterfaceTab />}
                   {activeTab === 'units' && <UnitsTab />}
                   {activeTab === 'sessions' && <SessionsTab />}
                   {activeTab === 'financials' && <FinancialsTab />}

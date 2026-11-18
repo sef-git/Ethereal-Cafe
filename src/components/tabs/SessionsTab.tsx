@@ -25,6 +25,14 @@ export const SessionsTab: React.FC = () => {
 
   const pageSize = 25;
 
+  const sessionStatuses = useMemo(() => {
+    const set = new Set<string>(['Paid', 'Pending']);
+    sessions.forEach((s) => {
+      if (s.payment_status) set.add(s.payment_status);
+    });
+    return Array.from(set);
+  }, [sessions]);
+
   // Filtered sessions
   const filteredSessions = useMemo(() => {
     return sessions.filter((s) => {
@@ -114,16 +122,16 @@ export const SessionsTab: React.FC = () => {
         </div>
 
         {/* Status filter */}
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
           <span className="text-slate-500 mr-1 text-[11px] uppercase font-medium">Payment:</span>
-          {['all', 'Paid', 'Pending'].map((st) => (
+          {['all', ...sessionStatuses].map((st) => (
             <button
               key={st}
               onClick={() => {
                 setStatusFilter(st);
                 setCurrentPage(1);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                 statusFilter === st
                   ? 'bg-blue-600 text-white'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -188,10 +196,22 @@ export const SessionsTab: React.FC = () => {
                       ₱{s.price}
                     </td>
                     <td className="py-3 px-4 text-right font-sans">
-                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400">
-                        <CheckCircle2 className="h-3 w-3" />
-                        {s.payment_status}
-                      </span>
+                      {s.payment_status === 'Paid' ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {s.payment_status}
+                        </span>
+                      ) : s.payment_status === 'Pending' ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-amber-400">
+                          <Clock className="h-3 w-3" />
+                          {s.payment_status}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-rose-400">
+                          <AlertCircle className="h-3 w-3" />
+                          {s.payment_status}
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button

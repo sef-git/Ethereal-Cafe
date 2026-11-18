@@ -9,6 +9,7 @@ interface NavbarProps {
 
 const TAB_NAMES: Record<string, string> = {
   overview: 'Executive Overview',
+  main_interface: 'Add New',
   units: 'PC Fleet & Floor Matrix',
   sessions: 'Gaming Sessions Log',
   financials: 'Financials & Earnings',

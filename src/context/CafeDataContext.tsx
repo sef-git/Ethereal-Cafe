@@ -117,6 +117,7 @@ interface CafeDataContextType {
   pythonLoading: boolean;
   error: string | null;
   refreshData: () => Promise<void>;
+  syncSilent: () => Promise<void>;
   refreshPythonAnalytics: () => Promise<void>;
 }
 
@@ -420,6 +421,7 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         pythonLoading,
         error,
         refreshData,
+        syncSilent: silentRefresh,
         refreshPythonAnalytics: handleRefreshPythonAnalytics,
       }}
     >

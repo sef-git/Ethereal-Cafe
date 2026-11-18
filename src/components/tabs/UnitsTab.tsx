@@ -25,13 +25,21 @@ export const UnitsTab: React.FC = () => {
   const [expandedPcId, setExpandedPcId] = useState<number | null>(null);
   const [historyModalUnit, setHistoryModalUnit] = useState<Unit | null>(null);
 
-  // Group by area locations
+  // Group by area locations & statuses dynamically
   const areas = useMemo(() => {
     const set = new Set<string>();
     units.forEach((u) => {
       if (u.area_location) set.add(u.area_location);
     });
     return Array.from(set);
+  }, [units]);
+
+  const unitStatuses = useMemo(() => {
+    const base = new Set<string>(['Available', 'In Use', 'Maintenance']);
+    units.forEach((u) => {
+      if (u.status) base.add(u.status);
+    });
+    return Array.from(base);
   }, [units]);
 
   // Filtered units
@@ -146,13 +154,13 @@ export const UnitsTab: React.FC = () => {
         </div>
 
         {/* Status Filters */}
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs">
           <span className="text-slate-500 mr-1 text-[11px] uppercase font-medium">Status:</span>
-          {['all', 'Available', 'In Use', 'Maintenance'].map((st) => (
+          {['all', ...unitStatuses].map((st) => (
             <button
               key={st}
               onClick={() => setSelectedStatus(st)}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 selectedStatus === st
                   ? 'bg-slate-800 text-blue-300 border border-blue-500/30'
                   : 'text-slate-500 hover:text-slate-300'

@@ -14,25 +14,30 @@ import { useCafeData } from '../../context/CafeDataContext';
 import { Customer } from '../../lib/supabase';
 
 export const CustomersTab: React.FC = () => {
-  const { customers, sessions } = useCafeData();
+  const { customers, sessions, sessionProducts } = useCafeData();
   const [searchTerm, setSearchTerm] = useState('');
   const [membershipFilter, setMembershipFilter] = useState('all');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  // Compute stats per customer from sessions
+  // Compute stats per customer from sessions and attached concession orders
   const customerStatsMap = useMemo(() => {
+    const foodBySession = new Map<number, number>();
+    sessionProducts.forEach((sp) => {
+      foodBySession.set(sp.session_id, (foodBySession.get(sp.session_id) || 0) + (Number(sp.subtotal) || 0));
+    });
+
     const map = new Map<number, { sessions: number; totalSpend: number; lastVisit: string | null }>();
     sessions.forEach((s) => {
       const existing = map.get(s.customer_id) || { sessions: 0, totalSpend: 0, lastVisit: null };
       existing.sessions += 1;
-      existing.totalSpend += Number(s.price) || 0;
+      existing.totalSpend += (Number(s.price) || 0) + (foodBySession.get(s.session_id) || 0);
       if (s.date && (!existing.lastVisit || s.date > existing.lastVisit)) {
         existing.lastVisit = s.date;
       }
       map.set(s.customer_id, existing);
     });
     return map;
-  }, [sessions]);
+  }, [sessions, sessionProducts]);
 
   // Unique memberships
   const memberships = useMemo(() => {
@@ -218,8 +223,8 @@ export const CustomersTab: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600/20 border border-blue-500/40 text-blue-400 font-bold text-lg">
-                  {selectedCustomer.first_name[0]}
-                  {selectedCustomer.last_name[0]}
+                  {selectedCustomer.first_name?.charAt(0) || '?'}
+                  {selectedCustomer.last_name?.charAt(0) || ''}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
