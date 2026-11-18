@@ -45,7 +45,7 @@ export default function App() {
           {/* Right Main Panel with Buffering System covering the panel before displaying elements */}
           <main
             ref={mainPanelRef}
-            className="relative flex-1 h-full overflow-y-auto p-4 sm:p-6 md:p-8 w-full max-w-[1600px]"
+            className="relative flex-1 h-full overflow-y-auto p-4 sm:p-6 md:p-8 w-full"
           >
             <MainPanelBuffer>
               <AnimatePresence mode="wait">

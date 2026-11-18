@@ -425,8 +425,8 @@ export const PythonAnalyticsTab: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Graph 1: Hourly Demand Density */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4 shrink-0">
               <div>
                 <h2 className="text-sm font-semibold text-white tracking-tight">Hourly Demand Density (24-Hour Cycle)</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Computed distribution from live sessions table (00:00 to 23:00)</p>
@@ -446,7 +446,7 @@ export const PythonAnalyticsTab: React.FC = () => {
               </div>
             </div>
 
-            <div className="h-72 w-full">
+            <div className="flex-1 min-h-[288px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hourlyHeatmap} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
@@ -480,8 +480,8 @@ export const PythonAnalyticsTab: React.FC = () => {
 
         {/* Graph 2: 7-Day Statistical Revenue Projection */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4 shrink-0">
               <div>
                 <h2 className="text-sm font-semibold text-white tracking-tight">7-Day Statistical Revenue Projection</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Projected daily gross and net profit based on fitted parameters</p>
@@ -507,7 +507,7 @@ export const PythonAnalyticsTab: React.FC = () => {
               </div>
             </div>
 
-            <div className="h-72 w-full">
+            <div className="flex-1 min-h-[288px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={forecastFuture} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
@@ -544,8 +544,8 @@ export const PythonAnalyticsTab: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Graph 3: Historical Trajectory vs Linear Growth Trend */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4 shrink-0">
               <div>
                 <h2 className="text-sm font-semibold text-white tracking-tight">Historical 14-Day Financial Trend</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Historical daily gross revenue and net profit curve</p>
@@ -571,7 +571,7 @@ export const PythonAnalyticsTab: React.FC = () => {
               </div>
             </div>
 
-            <div className="h-72 w-full">
+            <div className="flex-1 min-h-[288px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={forecastSeries} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
@@ -629,8 +629,8 @@ export const PythonAnalyticsTab: React.FC = () => {
 
         {/* Graph 4: Customer RFM Behavioral Segmentation */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4">
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4 shrink-0">
               <div>
                 <h2 className="text-sm font-semibold text-white tracking-tight">Customer RFM Behavioral Cohorts</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Patron distribution by engagement tier</p>
@@ -650,7 +650,7 @@ export const PythonAnalyticsTab: React.FC = () => {
               </div>
             </div>
 
-            <div className="h-72 w-full">
+            <div className="flex-1 min-h-[288px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={rfmChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />

@@ -384,8 +384,8 @@ export const FinancialsTab: React.FC = () => {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Payment Channels Pie */}
           <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between shadow-lg">
-            <div>
-              <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/70 mb-3">
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/70 mb-3 shrink-0">
                 <div>
                   <h2 className="text-sm font-semibold text-white tracking-tight">Payment Providers</h2>
                   <p className="text-xs text-slate-400 mt-0.5">Distribution across provider channels</p>
@@ -399,7 +399,7 @@ export const FinancialsTab: React.FC = () => {
                 </button>
               </div>
 
-              <div className="h-64 w-full mt-2">
+              <div className="flex-1 min-h-[256px] w-full mt-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -446,8 +446,8 @@ export const FinancialsTab: React.FC = () => {
 
           {/* Payment Methods Breakdown */}
           <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between shadow-lg">
-            <div>
-              <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/70 mb-3">
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/70 mb-3 shrink-0">
                 <div>
                   <h2 className="text-sm font-semibold text-white tracking-tight">Payment Method Distribution</h2>
                   <p className="text-xs text-slate-400 mt-0.5">Cash vs digital settlement ratio</p>
@@ -461,7 +461,7 @@ export const FinancialsTab: React.FC = () => {
                 </button>
               </div>
 
-              <div className="h-64 w-full mt-2">
+              <div className="flex-1 min-h-[256px] w-full mt-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
