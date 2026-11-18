@@ -1188,11 +1188,11 @@ export const MainInterfaceTab: React.FC = () => {
       )}
 
       {/* Main 2-Column Front Desk Workspace */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-stretch">
         {/* Left Column: Entry Console (7 cols) */}
-        <div className="lg:col-span-7 rounded-xl border border-slate-800/80 bg-[#090d16] p-5">
+        <div className="lg:col-span-7 flex flex-col rounded-xl border border-slate-800/80 bg-[#090d16] p-5">
           {/* Segmented Desk Entry Navigation */}
-          <div className="flex flex-wrap items-center gap-1.5 pb-4 mb-5 border-b border-slate-800/80">
+          <div className="flex flex-wrap items-center gap-1.5 pb-4 mb-5 border-b border-slate-800/80 shrink-0">
             {sectionTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeSection === tab.id;
@@ -1217,12 +1217,13 @@ export const MainInterfaceTab: React.FC = () => {
             })}
           </div>
 
-          {/* FORM 1: NEW GAMING SESSION (Existing or New Customer / PC / Employee) */}
+          {/* FORM 1: NEW GAMING SESSION */}
           {activeSection === 'session' && (
-            <form onSubmit={handleCreateSession} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-white">Log / Start Gaming Session</h2>
-              </div>
+            <form onSubmit={handleCreateSession} className="flex-1 flex flex-col justify-between gap-5">
+              <div className="flex-1 flex flex-col justify-between gap-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-white">Log / Start Gaming Session</h2>
+                </div>
 
               {/* Customer: Initial selector + optional + New toggle */}
               <div className="rounded-lg border border-slate-800/90 bg-[#060a12] p-3.5 space-y-3">
@@ -1657,7 +1658,9 @@ export const MainInterfaceTab: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-800/80">
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 mt-auto border-t border-slate-800/80">
                 <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
@@ -1684,13 +1687,14 @@ export const MainInterfaceTab: React.FC = () => {
             </form>
           )}
 
-          {/* FORM 2: ADD FOOD / CONCESSION ORDER (Existing or New Session + Existing or New Menu Item) */}
+          {/* FORM 2: ADD FOOD / CONCESSION ORDER */}
           {activeSection === 'food' && (
-            <form onSubmit={handleCreateFoodOrder} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-white">Add Concession / Food Order</h2>
-                <span className="text-xs font-mono text-slate-400">Auto-updates stock &amp; tabs</span>
-              </div>
+            <form onSubmit={handleCreateFoodOrder} className="flex-1 flex flex-col justify-between gap-5">
+              <div className="flex-1 flex flex-col justify-between gap-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-white">Add Concession / Food Order</h2>
+                  <span className="text-xs font-mono text-slate-400">Auto-updates stock &amp; tabs</span>
+                </div>
 
               {/* Target Session: Initial selector + optional + New toggle */}
               <div className="rounded-lg border border-slate-800/90 bg-[#060a12] p-3.5 space-y-3">
@@ -1954,7 +1958,32 @@ export const MainInterfaceTab: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/80">
+                {sessionProducts.length > 0 && (
+                  <div className="rounded-lg border border-slate-800/80 bg-[#060a12] p-3.5 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                      Recent Concession Tickets
+                    </div>
+                    <div className="space-y-1.5">
+                      {sessionProducts.slice(0, 3).map((sp) => (
+                        <div
+                          key={`recent-sp-${sp.session_product_id}`}
+                          className="flex items-center justify-between text-xs text-slate-300"
+                        >
+                          <span className="truncate">
+                            {sp.quantity}x {sp.products?.product_name || `Item #${sp.product_id}`}{' '}
+                            <span className="font-mono text-slate-500">(Sess #{sp.session_id})</span>
+                          </span>
+                          <span className="font-mono text-emerald-400 tabular-nums shrink-0">
+                            ₱{Number(sp.subtotal).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 mt-auto border-t border-slate-800/80">
                 <button
                   type="submit"
                   disabled={submitting}
@@ -1969,13 +1998,14 @@ export const MainInterfaceTab: React.FC = () => {
 
           {/* FORM 3: RECORD PAYMENT & SETTLE SESSION */}
           {activeSection === 'payment' && (
-            <form onSubmit={handleRecordPayment} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-white">
-                  Record Session &amp; Concession Payment
-                </h2>
-                <span className="text-xs font-mono text-slate-400">Updates payments &amp; earnings</span>
-              </div>
+            <form onSubmit={handleRecordPayment} className="flex-1 flex flex-col justify-between gap-5">
+              <div className="flex-1 flex flex-col justify-between gap-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-white">
+                    Record Session &amp; Concession Payment
+                  </h2>
+                  <span className="text-xs font-mono text-slate-400">Updates payments &amp; earnings</span>
+                </div>
 
               {/* Target Session: Initial selector + optional + New toggle */}
               <div className="rounded-lg border border-slate-800/90 bg-[#060a12] p-3.5 space-y-3">
@@ -2211,7 +2241,31 @@ export const MainInterfaceTab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-800/80">
+                {payments.length > 0 && (
+                  <div className="rounded-lg border border-slate-800/80 bg-[#060a12] p-3.5 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                      Recent Settled Payments
+                    </div>
+                    <div className="space-y-1.5">
+                      {payments.slice(0, 3).map((p) => (
+                        <div
+                          key={`recent-pay-${p.payments_id}`}
+                          className="flex items-center justify-between text-xs font-mono text-slate-300"
+                        >
+                          <span>
+                            Pay #{p.payments_id} <span className="text-slate-500">·</span> Sess #{p.session_id}
+                          </span>
+                          <span className="text-blue-400 text-[11px]">
+                            {p.payment_method} ({p.provider})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 mt-auto border-t border-slate-800/80">
                 <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
                   <input
                     type="checkbox"
@@ -2236,13 +2290,14 @@ export const MainInterfaceTab: React.FC = () => {
 
           {/* FORM 4: REGISTER NEW CUSTOMER */}
           {activeSection === 'customer' && (
-            <form onSubmit={handleCreateCustomer} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-white">Register Customer Profile</h2>
-                <span className="text-xs font-mono text-slate-400">
-                  {customers.length} patrons
-                </span>
-              </div>
+            <form onSubmit={handleCreateCustomer} className="flex-1 flex flex-col justify-between gap-5">
+              <div className="flex-1 flex flex-col justify-between gap-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-white">Register Customer Profile</h2>
+                  <span className="text-xs font-mono text-slate-400">
+                    {customers.length} patrons
+                  </span>
+                </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -2322,7 +2377,32 @@ export const MainInterfaceTab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/80">
+                {customers.length > 0 && (
+                  <div className="rounded-lg border border-slate-800/80 bg-[#060a12] p-3.5 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                      Recently Added Patrons
+                    </div>
+                    <div className="space-y-1.5">
+                      {customers.slice(0, 4).map((c) => (
+                        <div
+                          key={`recent-cust-${c.customer_id}`}
+                          className="flex items-center justify-between text-xs text-slate-300"
+                        >
+                          <span className="truncate">
+                            <span className="font-mono text-slate-500 mr-1.5">#{c.customer_id}</span>
+                            {c.first_name} {c.last_name}
+                          </span>
+                          <span className="font-mono text-cyan-400 text-[11px] shrink-0">
+                            {c.membership}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 mt-auto border-t border-slate-800/80">
                 <button
                   type="submit"
                   disabled={submitting}
@@ -2337,11 +2417,12 @@ export const MainInterfaceTab: React.FC = () => {
 
           {/* FORM 5: ADD NEW EMPLOYEE */}
           {activeSection === 'employee' && (
-            <form onSubmit={handleCreateEmployee} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-white">Add Staff Member to Roster</h2>
-                <span className="text-xs font-mono text-slate-400">{employees.length} active staff</span>
-              </div>
+            <form onSubmit={handleCreateEmployee} className="flex-1 flex flex-col justify-between gap-5">
+              <div className="flex-1 flex flex-col justify-between gap-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-white">Add Staff Member to Roster</h2>
+                  <span className="text-xs font-mono text-slate-400">{employees.length} active staff</span>
+                </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
@@ -2437,7 +2518,32 @@ export const MainInterfaceTab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/80">
+                {employees.length > 0 && (
+                  <div className="rounded-lg border border-slate-800/80 bg-[#060a12] p-3.5 space-y-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                      Current Roster Coverage
+                    </div>
+                    <div className="space-y-1.5">
+                      {employees.slice(0, 4).map((emp) => (
+                        <div
+                          key={`recent-emp-${emp.employee_id}`}
+                          className="flex items-center justify-between text-xs text-slate-300"
+                        >
+                          <span className="truncate">
+                            <span className="font-mono text-slate-500 mr-1.5">#{emp.employee_id}</span>
+                            {emp.first_name} {emp.last_name}
+                          </span>
+                          <span className="font-mono text-indigo-400 text-[11px] shrink-0">
+                            {emp.shifts} Shift
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 mt-auto border-t border-slate-800/80">
                 <button
                   type="submit"
                   disabled={submitting}
@@ -2452,8 +2558,9 @@ export const MainInterfaceTab: React.FC = () => {
 
           {/* FORM 6: PC UNIT, NEW MENU ITEM, OR RESTOCK */}
           {activeSection === 'catalog' && (
-            <form onSubmit={handleCatalogSubmit} className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+            <form onSubmit={handleCatalogSubmit} className="flex-1 flex flex-col justify-between gap-5">
+              <div className="flex-1 flex flex-col justify-between gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-white">
                   PC Station &amp; Concession Inventory
                 </h2>
@@ -2682,7 +2789,49 @@ export const MainInterfaceTab: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/80">
+                <div className="rounded-lg border border-slate-800/80 bg-[#060a12] p-3.5 space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    {catalogMode === 'unit' ? 'Latest PC Units' : 'Low Stock Concession Alerts'}
+                  </div>
+                  <div className="space-y-1.5">
+                    {catalogMode === 'unit'
+                      ? units.slice(0, 4).map((u) => (
+                          <div
+                            key={`recent-unit-${u.pc_id}`}
+                            className="flex items-center justify-between text-xs text-slate-300"
+                          >
+                            <span className="truncate">
+                              <span className="font-mono text-white font-semibold mr-1.5">{u.pc_number}</span>
+                              {u.type} · {u.area_location}
+                            </span>
+                            <span className="font-mono text-slate-400 text-[11px] shrink-0">{u.status}</span>
+                          </div>
+                        ))
+                      : (lowStockProducts.length > 0 ? lowStockProducts : products)
+                          .slice(0, 4)
+                          .map((p) => (
+                            <div
+                              key={`recent-prod-${p.product_id}`}
+                              className="flex items-center justify-between text-xs text-slate-300"
+                            >
+                              <span className="truncate">
+                                {p.product_name}{' '}
+                                <span className="text-slate-500">({p.category})</span>
+                              </span>
+                              <span
+                                className={`font-mono text-[11px] shrink-0 tabular-nums ${
+                                  Number(p.stock_quantity) <= 30 ? 'text-amber-400' : 'text-emerald-400'
+                                }`}
+                              >
+                                {p.stock_quantity} left
+                              </span>
+                            </div>
+                          ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 mt-auto border-t border-slate-800/80">
                 <button
                   type="submit"
                   disabled={submitting}
