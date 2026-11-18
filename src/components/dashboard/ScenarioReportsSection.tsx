@@ -80,6 +80,11 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
       };
     });
 
+    const totalGross = items.reduce((acc, row) => acc + row.gross, 0);
+    const totalExpenses = items.reduce((acc, row) => acc + row.expenses, 0);
+    const totalNet = items.reduce((acc, row) => acc + row.net, 0);
+    const marginPct = totalGross > 0 ? ((totalNet / totalGross) * 100).toFixed(1) : '0.0';
+
     const chartData = items.map((item) => ({
       name: `Session #${item.sessionId}`,
       date: item.date.slice(5),
@@ -88,17 +93,18 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
       NetProfit: item.net,
     }));
 
-    return { items, chartData };
+    return { items, chartData, totalGross, totalExpenses, totalNet, marginPct };
   }, [earnings, payments, sessions]);
 
   // Scenario 2: July 2026 Sessions involving Rene Navarro and Customers
   const scenario2Data = useMemo(() => {
+    const reneEmp = employees.find((e) => e.first_name?.toLowerCase().includes('rene') || e.employee_id === 3);
     const reneSessions = sessions.filter(
       (s) =>
         s.date &&
         s.date.startsWith('2026-07') &&
-        s.employees &&
-        (s.employees.first_name?.toLowerCase().includes('rene') || s.employee_id === 3)
+        ((s.employees && s.employees.first_name?.toLowerCase().includes('rene')) ||
+          s.employee_id === (reneEmp?.employee_id ?? 3))
     );
 
     const chartData = reneSessions.map((s) => ({
@@ -109,8 +115,8 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
       unit: s.units?.pc_number || `PC-${s.pc_id}`,
     }));
 
-    return { sessions: reneSessions, chartData };
-  }, [sessions]);
+    return { sessions: reneSessions, chartData, reneEmp };
+  }, [sessions, employees]);
 
   // Scenario 3: All July 2026 Sessions including Units and Customers
   const [s3Search, setS3Search] = useState('');
@@ -151,13 +157,21 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
       return matchSearch && matchTier;
     });
 
-    return { total: julySessions.length, tierChartData, filtered };
+    const uniquePcs = new Set(julySessions.map((s) => s.pc_id)).size;
+
+    return { total: julySessions.length, uniquePcs, tierChartData, filtered };
   }, [sessions, s3Search, s3TierFilter]);
 
   // Scenario 4: Sessions where product is Lucky Me Pancit Canton Extra Hot and unit is PC-04
   const [s4Tab, setS4Tab] = useState<'intersection' | 'product_fleet' | 'pc04_orders'>('intersection');
 
   const scenario4Data = useMemo(() => {
+    const luckyMeProduct = products.find(
+      (p) =>
+        p.product_name?.toLowerCase().includes('lucky me') &&
+        p.product_name?.toLowerCase().includes('extra hot')
+    );
+
     const extraHotOrders = sessionProducts.filter(
       (sp) =>
         sp.products?.product_name?.toLowerCase().includes('lucky me') &&
@@ -184,27 +198,32 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
       ordersByPc[pc] = (ordersByPc[pc] || 0) + (sp.quantity || 1);
     });
 
-    // Add PC-04 to chart even if 0 to show clear comparative analysis
-    if (!ordersByPc['PC-04']) {
+    // Always include PC-04 in comparative chart
+    if (ordersByPc['PC-04'] === undefined) {
       ordersByPc['PC-04'] = 0;
     }
 
-    const chartData = Object.entries(ordersByPc)
-      .slice(0, 8)
-      .map(([pc, qty]) => ({
-        unit: pc,
-        orders: qty,
-        isPC04: pc === 'PC-04',
-      }));
+    const sortedEntries = Object.entries(ordersByPc).sort((a, b) => b[1] - a[1]);
+    const topEntries = sortedEntries.slice(0, 8);
+    if (!topEntries.some(([pc]) => pc === 'PC-04')) {
+      topEntries[topEntries.length - 1] = ['PC-04', ordersByPc['PC-04']];
+    }
+
+    const chartData = topEntries.map(([pc, qty]) => ({
+      unit: pc,
+      orders: qty,
+      isPC04: pc === 'PC-04',
+    }));
 
     return {
+      luckyMeProduct,
       exactMatch,
       extraHotOrders,
       pc4Sessions,
       pc4Orders,
       chartData,
     };
-  }, [sessionProducts, sessions]);
+  }, [sessionProducts, sessions, products]);
 
   // Collapsible table states
   const [showS1Table, setShowS1Table] = useState(true);
@@ -353,7 +372,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
             <span>Cumulative Net Margin:</span>
             <span className="text-emerald-400 font-semibold">
-              73.4% Retained (₱580.00 / ₱790.00)
+              {scenario1Data.marginPct}% Retained (₱{scenario1Data.totalNet.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ₱{scenario1Data.totalGross.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
             </span>
           </div>
         </div>
@@ -462,7 +481,9 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
             <span>Staff Supervisor:</span>
             <span className="text-cyan-400 font-semibold">
-              Rene Navarro (Employee ID: 3 · Night Shift)
+              {scenario2Data.reneEmp
+                ? `${scenario2Data.reneEmp.first_name} ${scenario2Data.reneEmp.last_name} (Employee ID: ${scenario2Data.reneEmp.employee_id} · ${scenario2Data.reneEmp.shifts} Shift)`
+                : 'Rene Navarro (Employee ID: 3 · Night Shift)'}
             </span>
           </div>
         </div>
@@ -478,7 +499,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                   Scenario 3: July 2026 Fleet &amp; Customer Session Matrix
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  110 July 2026 sessions mapped to PC units and customer profiles
+                  {scenario3Data.total.toLocaleString()} July 2026 sessions mapped to PC units and customer profiles
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3 shrink-0">
@@ -570,7 +591,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/60 font-mono">
-                        {scenario3Data.filtered.slice(0, 15).map((s) => (
+                        {scenario3Data.filtered.slice(0, 100).map((s) => (
                           <tr key={s.session_id} className="hover:bg-slate-800/40 transition-colors">
                             <td className="px-3 py-1.5 font-bold text-purple-400">#{s.session_id}</td>
                             <td className="px-3 py-1.5 text-slate-400">{s.date}</td>
@@ -607,7 +628,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
             <span>July Fleet Audit:</span>
             <span className="text-purple-300 font-semibold">
-              110 Verified Sessions · 40 of 40 PCs Active
+              {scenario3Data.total.toLocaleString()} Verified Sessions · {scenario3Data.uniquePcs} of {units.length} PCs Active
             </span>
           </div>
         </div>
@@ -680,7 +701,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                       : 'bg-slate-800 text-slate-400 hover:text-white'
                   }`}
                 >
-                  Exact Query (PC-04 + Extra Hot)
+                  Exact Query ({scenario4Data.exactMatch.length})
                 </button>
                 <button
                   onClick={() => setS4Tab('product_fleet')}
@@ -706,20 +727,57 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
 
               {/* Tab 1: Exact intersection */}
               {s4Tab === 'intersection' && (
-                <div className="rounded-lg border border-slate-800 bg-[#060a12] p-3 text-xs">
-                  <div className="flex items-start gap-2.5 text-slate-300">
-                    <AlertCircle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-white">
-                        Live Database Query Result: 0 Matching Intersection Records
-                      </p>
-                      <p className="mt-1 text-[11px] text-slate-400 leading-relaxed">
-                        In the current Supabase dataset, no customer on workstation <strong className="text-white">PC-04</strong> ordered <strong className="text-amber-300">Lucky Me Pancit Canton Extra Hot</strong>.
-                        However, PC-04 logged <span className="text-white font-semibold">8 other food/drink orders</span> (e.g. Nissin Cup Noodles, Sizzling Sisig, Mountain Dew), while Lucky Me Extra Hot was ordered <span className="text-amber-300 font-semibold">25 times</span> across other fleet units.
-                      </p>
+                scenario4Data.exactMatch.length > 0 ? (
+                  <div className="max-h-48 overflow-y-auto rounded-lg border border-slate-800 bg-[#060a12]">
+                    <table className="w-full text-left text-[11px] font-mono text-slate-300">
+                      <thead className="sticky top-0 border-b border-slate-800 bg-[#080d19] text-[10px] uppercase text-slate-400">
+                        <tr>
+                          <th className="px-3 py-2">Order ID</th>
+                          <th className="px-3 py-2">Session</th>
+                          <th className="px-3 py-2">Customer</th>
+                          <th className="px-3 py-2">Station</th>
+                          <th className="px-3 py-2">Date</th>
+                          <th className="px-3 py-2 text-right">Qty</th>
+                          <th className="px-3 py-2 text-right">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60 font-mono">
+                        {scenario4Data.exactMatch.map((sp) => (
+                          <tr key={sp.session_product_id} className="hover:bg-slate-800/40 transition-colors">
+                            <td className="px-3 py-1.5 font-bold text-amber-400">#{sp.session_product_id}</td>
+                            <td className="px-3 py-1.5 text-slate-300">Session #{sp.session_id}</td>
+                            <td className="px-3 py-1.5 text-white font-sans">
+                              {sp.sessions?.customers
+                                ? `${sp.sessions.customers.first_name} ${sp.sessions.customers.last_name}`
+                                : `Patron #${sp.sessions?.customer_id || '—'}`}
+                            </td>
+                            <td className="px-3 py-1.5 text-amber-300 font-bold">
+                              {sp.sessions?.units?.pc_number || 'PC-04'}
+                            </td>
+                            <td className="px-3 py-1.5 text-slate-400">{sp.sessions?.date || '—'}</td>
+                            <td className="px-3 py-1.5 text-right text-slate-200">{sp.quantity}</td>
+                            <td className="px-3 py-1.5 text-right text-emerald-400 font-bold">₱{sp.subtotal}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-slate-800 bg-[#060a12] p-3 text-xs">
+                    <div className="flex items-start gap-2.5 text-slate-300">
+                      <AlertCircle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold text-white">
+                          Live Database Query Result: 0 Matching Intersection Records
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-400 leading-relaxed">
+                          In the current Supabase dataset, no customer on workstation <strong className="text-white">PC-04</strong> ordered <strong className="text-amber-300">Lucky Me Pancit Canton Extra Hot</strong>.
+                          However, PC-04 logged <span className="text-white font-semibold">{scenario4Data.pc4Orders.length} other food/drink orders</span>, while Lucky Me Extra Hot was ordered <span className="text-amber-300 font-semibold">{scenario4Data.extraHotOrders.length} times</span> across other fleet units.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )
               )}
 
               {/* Tab 2: Fleetwide Extra Hot orders */}
@@ -737,7 +795,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 font-mono">
-                      {scenario4Data.extraHotOrders.slice(0, 8).map((sp) => (
+                      {scenario4Data.extraHotOrders.map((sp) => (
                         <tr key={sp.session_product_id} className="hover:bg-slate-800/40 transition-colors">
                           <td className="px-3 py-1.5 font-bold text-amber-400">#{sp.session_product_id}</td>
                           <td className="px-3 py-1.5 text-slate-300">Session #{sp.session_id}</td>
@@ -787,7 +845,7 @@ export const ScenarioReportsSection: React.FC<ScenarioReportsSectionProps> = ({
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
             <span>Inventory Status:</span>
             <span className="text-amber-400 font-semibold">
-              Lucky Me Extra Hot: 150 In Stock (₱30.00 / pack)
+              Lucky Me Extra Hot: {scenario4Data.luckyMeProduct?.stock_quantity ?? 0} In Stock (₱{Number(scenario4Data.luckyMeProduct?.unit_price ?? 30).toFixed(2)} / pack)
             </span>
           </div>
         </div>

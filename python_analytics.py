@@ -28,18 +28,31 @@ SUPABASE_KEY = (
 )
 
 def fetch_table(table_name, select="*"):
-    url = f"{SUPABASE_URL}/rest/v1/{table_name}?select={select}"
-    req = urllib.request.Request(url, headers={
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Range": "0-1999"
-    })
-    try:
-        with urllib.request.urlopen(req, timeout=8) as response:
-            return json.loads(response.read().decode('utf-8'))
-    except Exception as e:
-        sys.stderr.write(f"Warning fetching {table_name}: {e}\n")
-        return []
+    all_rows = []
+    offset = 0
+    page_size = 1000
+
+    while True:
+        url = f"{SUPABASE_URL}/rest/v1/{table_name}?select={select}"
+        req = urllib.request.Request(url, headers={
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Range": f"{offset}-{offset + page_size - 1}"
+        })
+        try:
+            with urllib.request.urlopen(req, timeout=8) as response:
+                page = json.loads(response.read().decode('utf-8'))
+                if not isinstance(page, list) or len(page) == 0:
+                    break
+                all_rows.extend(page)
+                if len(page) < page_size:
+                    break
+                offset += page_size
+        except Exception as e:
+            sys.stderr.write(f"Warning fetching {table_name} (offset {offset}): {e}\n")
+            break
+
+    return all_rows
 
 def analyze_hourly_heatmap(sessions):
     hourly_counts = {h: 0 for h in range(24)}

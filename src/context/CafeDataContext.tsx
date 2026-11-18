@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   supabase,
   Customer,
@@ -13,6 +13,9 @@ import {
 import { computeClientAnalytics, PythonAnalyticsData } from '../lib/analyticsEngine';
 
 export type { PythonAnalyticsData };
+
+const PAGE_SIZE = 1000;
+const AUTO_SYNC_INTERVAL_MS = 30000;
 
 // Calculate dynamic connection latency persisting between 1000ms and 3000ms (1 to 3 seconds)
 export const calculateConnectionDelay = (): number => {
@@ -52,7 +55,6 @@ export const calculateConnectionDelay = (): number => {
     }
 
     if (typeof conn.rtt === 'number') {
-      // Map RTT (e.g. 30ms -> ~1100ms, 250ms -> ~1700ms, 600ms+ -> ~2800ms)
       const rttScaled = 1000 + Math.min(2000, conn.rtt * 2.5);
       delay = Math.max(delay, rttScaled);
     }
@@ -68,9 +70,38 @@ export const calculateConnectionDelay = (): number => {
     }
   }
 
-  // Strictly clamp between 1000ms and 3000ms (1 to 3 seconds)
   return Math.min(3000, Math.max(1000, Math.round(delay)));
 };
+
+/**
+ * Paginated Supabase table fetcher that bypasses PostgREST's 1,000-row per-request cap
+ * so every added or updated record across large tables is fetched completely.
+ */
+async function fetchAllFromTable<T>(
+  label: string,
+  buildQuery: (from: number, to: number) => PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>
+): Promise<T[]> {
+  const allRows: T[] = [];
+  let from = 0;
+
+  while (true) {
+    const to = from + PAGE_SIZE - 1;
+    const { data, error } = await buildQuery(from, to);
+    if (error) {
+      throw new Error(`${label}: ${error.message}`);
+    }
+    if (!data || data.length === 0) {
+      break;
+    }
+    allRows.push(...(data as T[]));
+    if (data.length < PAGE_SIZE) {
+      break;
+    }
+    from += PAGE_SIZE;
+  }
+
+  return allRows;
+}
 
 interface CafeDataContextType {
   customers: Customer[];
@@ -106,8 +137,10 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [pythonLoading, setPythonLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPythonAnalytics = useCallback(async () => {
-    // Only query backend API if running on a host that serves Node /api routes (localhost or Cloud Run dev app)
+  const isSyncingRef = useRef<boolean>(false);
+  const realtimeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchPythonAnalytics = useCallback(async (forceRefresh = false) => {
     const isBackendHost =
       typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' ||
@@ -115,14 +148,15 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         window.location.hostname.includes('run.app'));
 
     if (!isBackendHost) {
-      // On static or external domains (e.g. ethereal-cafe.ai.studio),
-      // statistical models are computed live from Supabase directly in memory.
       return;
     }
 
     try {
       setPythonLoading(true);
-      const res = await fetch('/api/python-analytics?action=all');
+      const query = forceRefresh
+        ? `/api/python-analytics?action=all&refresh=true&t=${Date.now()}`
+        : `/api/python-analytics?action=all&t=${Date.now()}`;
+      const res = await fetch(query);
       if (res.ok) {
         const data = await res.json();
         if (data && !data.error && !data.fallback) {
@@ -136,65 +170,102 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  const refreshData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const connDelay = calculateConnectionDelay();
-
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        // Persist connecting/buffering attempt for 1 to 3 seconds based on connection before showing error
-        await new Promise((resolve) => setTimeout(resolve, connDelay));
-        throw new Error('Offline: No internet connection detected.');
-      }
-
-      // Fetch from Supabase tables concurrently with connection delay persisting between 1 to 3 seconds
-      const [
-        custRes,
-        empRes,
-        unitsRes,
-        prodRes,
-        sessRes,
-        sessProdRes,
-        payRes,
-        earnRes,
-      ] = await Promise.all([
-        supabase.from('customers').select('*').order('customer_id', { ascending: true }),
-        supabase.from('employees').select('*').order('employee_id', { ascending: true }),
-        supabase.from('units').select('*').order('pc_id', { ascending: true }),
-        supabase.from('products').select('*').order('product_id', { ascending: true }),
+  const fetchAllDatasets = useCallback(async () => {
+    const [
+      custData,
+      empData,
+      unitsData,
+      prodData,
+      sessData,
+      sessProdData,
+      payData,
+      earnData,
+    ] = await Promise.all([
+      fetchAllFromTable<Customer>('Customers', (from, to) =>
+        supabase
+          .from('customers')
+          .select('*')
+          .order('customer_id', { ascending: true })
+          .range(from, to)
+      ),
+      fetchAllFromTable<Employee>('Employees', (from, to) =>
+        supabase
+          .from('employees')
+          .select('*')
+          .order('employee_id', { ascending: true })
+          .range(from, to)
+      ),
+      fetchAllFromTable<Unit>('Units', (from, to) =>
+        supabase
+          .from('units')
+          .select('*')
+          .order('pc_id', { ascending: true })
+          .range(from, to)
+      ),
+      fetchAllFromTable<Product>('Products', (from, to) =>
+        supabase
+          .from('products')
+          .select('*')
+          .order('product_id', { ascending: true })
+          .range(from, to)
+      ),
+      fetchAllFromTable<Session>('Sessions', (from, to) =>
         supabase
           .from('sessions')
           .select('*, customers(*), units(*), employees(*)')
           .order('date', { ascending: false })
-          .limit(1500),
+          .order('session_id', { ascending: false })
+          .range(from, to)
+      ),
+      fetchAllFromTable<SessionProduct>('Session Products', (from, to) =>
         supabase
           .from('session_products')
           .select('*, products(*), sessions(*, units(*), customers(*))')
-          .limit(1000),
-        supabase.from('payments').select('*').order('date', { ascending: false }).limit(1000),
-        supabase.from('earnings').select('*, payments(*)').order('date', { ascending: false }).limit(500),
-        new Promise((resolve) => setTimeout(resolve, connDelay)),
-      ]);
+          .order('session_product_id', { ascending: false })
+          .range(from, to)
+      ),
+      fetchAllFromTable<Payment>('Payments', (from, to) =>
+        supabase
+          .from('payments')
+          .select('*')
+          .order('date', { ascending: false })
+          .order('payments_id', { ascending: false })
+          .range(from, to)
+      ),
+      fetchAllFromTable<Earning>('Earnings', (from, to) =>
+        supabase
+          .from('earnings')
+          .select('*, payments(*)')
+          .order('date', { ascending: false })
+          .order('earnings_id', { ascending: false })
+          .range(from, to)
+      ),
+    ]);
 
-      if (custRes.error) throw new Error(`Customers: ${custRes.error.message}`);
-      if (empRes.error) throw new Error(`Employees: ${empRes.error.message}`);
-      if (unitsRes.error) throw new Error(`Units: ${unitsRes.error.message}`);
-      if (prodRes.error) throw new Error(`Products: ${prodRes.error.message}`);
-      if (sessRes.error) throw new Error(`Sessions: ${sessRes.error.message}`);
-      if (sessProdRes.error) throw new Error(`Session Products: ${sessProdRes.error.message}`);
-      if (payRes.error) throw new Error(`Payments: ${payRes.error.message}`);
-      if (earnRes.error) throw new Error(`Earnings: ${earnRes.error.message}`);
+    return {
+      custData,
+      empData,
+      unitsData,
+      prodData,
+      sessData,
+      sessProdData,
+      payData,
+      earnData,
+    };
+  }, []);
 
-      const custData = (custRes.data as Customer[]) || [];
-      const empData = (empRes.data as Employee[]) || [];
-      const unitsData = (unitsRes.data as Unit[]) || [];
-      const prodData = (prodRes.data as Product[]) || [];
-      const sessData = (sessRes.data as Session[]) || [];
-      const sessProdData = (sessProdRes.data as SessionProduct[]) || [];
-      const payData = (payRes.data as Payment[]) || [];
-      const earnData = (earnRes.data as Earning[]) || [];
+  const applyFetchedDatasets = useCallback(
+    (datasets: Awaited<ReturnType<typeof fetchAllDatasets>>, forcePythonRefresh = false) => {
+      const {
+        custData,
+        empData,
+        unitsData,
+        prodData,
+        sessData,
+        sessProdData,
+        payData,
+        earnData,
+      } = datasets;
 
       setCustomers(custData);
       setEmployees(empData);
@@ -205,25 +276,133 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setPayments(payData);
       setEarnings(earnData);
 
-      // Pre-compute analytics immediately from live Supabase data
-      // Guarantees that opening the site at any URL never has missing data
+      // Recompute live analytics immediately from full Supabase datasets
       const localAnalytics = computeClientAnalytics(sessData, unitsData, earnData, custData);
       setPythonAnalytics(localAnalytics);
 
-      // Background sync with Python 3 backend if hosted together
-      fetchPythonAnalytics();
+      // Background sync with Python 3 backend
+      fetchPythonAnalytics(forcePythonRefresh);
+    },
+    [fetchPythonAnalytics]
+  );
+
+  // Full refresh with buffering state (used on mount, manual sync button, and reconnect)
+  const refreshData = useCallback(async () => {
+    try {
+      isSyncingRef.current = true;
+      setLoading(true);
+      setError(null);
+
+      const connDelay = calculateConnectionDelay();
+
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        await new Promise((resolve) => setTimeout(resolve, connDelay));
+        throw new Error('Offline: No internet connection detected.');
+      }
+
+      const [datasets] = await Promise.all([
+        fetchAllDatasets(),
+        new Promise((resolve) => setTimeout(resolve, connDelay)),
+      ]);
+
+      applyFetchedDatasets(datasets, true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error connecting to Supabase';
       setError(msg);
       console.error('Supabase fetch failed:', err);
     } finally {
+      isSyncingRef.current = false;
       setLoading(false);
     }
-  }, [fetchPythonAnalytics]);
+  }, [fetchAllDatasets, applyFetchedDatasets]);
 
+  // Silent background live sync (used by Realtime subscription, tab focus, and polling)
+  const silentRefresh = useCallback(async () => {
+    if (isSyncingRef.current) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+
+    try {
+      isSyncingRef.current = true;
+      const datasets = await fetchAllDatasets();
+      setError(null);
+      applyFetchedDatasets(datasets, true);
+    } catch (err: unknown) {
+      console.warn('Background Supabase live sync skipped:', err);
+    } finally {
+      isSyncingRef.current = false;
+    }
+  }, [fetchAllDatasets, applyFetchedDatasets]);
+
+  // Initial mount fetch
   useEffect(() => {
     refreshData();
   }, [refreshData]);
+
+  // Live Supabase Realtime listener + visibility focus sync + periodic poll fallback
+  useEffect(() => {
+    const scheduleSilentSync = () => {
+      if (realtimeDebounceRef.current) {
+        clearTimeout(realtimeDebounceRef.current);
+      }
+      realtimeDebounceRef.current = setTimeout(() => {
+        silentRefresh();
+      }, 600);
+    };
+
+    const watchedTables = [
+      'customers',
+      'employees',
+      'units',
+      'products',
+      'sessions',
+      'session_products',
+      'payments',
+      'earnings',
+    ];
+
+    let channel = supabase.channel('ethereal-cafe-live-sync');
+    watchedTables.forEach((table) => {
+      channel = channel.on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table },
+        scheduleSilentSync
+      );
+    });
+    channel.subscribe();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        silentRefresh();
+      }
+    };
+
+    const handleFocus = () => {
+      silentRefresh();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    const pollTimer = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+        silentRefresh();
+      }
+    }, AUTO_SYNC_INTERVAL_MS);
+
+    return () => {
+      if (realtimeDebounceRef.current) {
+        clearTimeout(realtimeDebounceRef.current);
+      }
+      clearInterval(pollTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      supabase.removeChannel(channel);
+    };
+  }, [silentRefresh]);
+
+  const handleRefreshPythonAnalytics = useCallback(async () => {
+    await fetchPythonAnalytics(true);
+  }, [fetchPythonAnalytics]);
 
   return (
     <CafeDataContext.Provider
@@ -241,7 +420,7 @@ export const CafeDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         pythonLoading,
         error,
         refreshData,
-        refreshPythonAnalytics: fetchPythonAnalytics,
+        refreshPythonAnalytics: handleRefreshPythonAnalytics,
       }}
     >
       {children}

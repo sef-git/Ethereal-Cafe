@@ -56,11 +56,15 @@ export const OverviewTab: React.FC = () => {
 
   const totalFnbRevenue = sessionProducts.reduce((sum, sp) => sum + (Number(sp.subtotal) || 0), 0);
 
-  // Chart data: aggregated chronologically from earnings
-  const dailyEarningsMap = new Map<string, { date: string; gross: number; profit: number; expenses: number }>();
+  // Chart data: aggregated chronologically from earnings (latest 15 days)
+  const dailyEarningsMap = new Map<
+    string,
+    { rawDate: string; date: string; gross: number; profit: number; expenses: number }
+  >();
   earnings.forEach((e) => {
     if (!e.date) return;
     const existing = dailyEarningsMap.get(e.date) || {
+      rawDate: e.date,
       date: e.date.substring(5), // MM-DD
       gross: 0,
       profit: 0,
@@ -72,7 +76,9 @@ export const OverviewTab: React.FC = () => {
     dailyEarningsMap.set(e.date, existing);
   });
 
-  const chartData = Array.from(dailyEarningsMap.values()).slice(-15);
+  const chartData = Array.from(dailyEarningsMap.values())
+    .sort((a, b) => a.rawDate.localeCompare(b.rawDate))
+    .slice(-15);
 
   // Hourly traffic from Python analytics or fallback
   const hourlyData = pythonAnalytics?.hourly?.heatmap?.filter((_, idx) => idx % 2 === 0) || [];
@@ -92,7 +98,7 @@ export const OverviewTab: React.FC = () => {
             Live Database
           </span>
           <span className="text-slate-600">·</span>
-          <span className="font-mono text-slate-300">1,140 Sessions Processed</span>
+          <span className="font-mono text-slate-300">{sessions.length.toLocaleString()} Sessions Processed</span>
         </div>
       </div>
 
@@ -131,7 +137,7 @@ export const OverviewTab: React.FC = () => {
             </span>
           </div>
           <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
-            <span className="text-slate-500 font-mono">140 ledger entries</span>
+            <span className="text-slate-500 font-mono">{earnings.length.toLocaleString()} ledger entries</span>
             <span className="text-slate-600">·</span>
             <span className="text-blue-400 font-mono">Verified</span>
           </div>

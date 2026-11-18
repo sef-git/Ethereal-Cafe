@@ -53,10 +53,11 @@ const CACHE_TTL_MS = 60 * 1000;
 // API: Run Python 3 Analytics Engine
 app.get('/api/python-analytics', (req: Request, res: Response) => {
   const action = (req.query.action as string) || 'all';
+  const forceRefresh = req.query.refresh === 'true';
 
-  // Return fresh cache if available to respond in < 1ms
+  // Return fresh cache if available to respond in < 1ms unless forceRefresh is requested
   const cached = analyticsCache.get(action);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+  if (!forceRefresh && cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     return res.json(cached.data);
   }
 

@@ -34,15 +34,22 @@ import { ScenarioReportsSection } from '../dashboard/ScenarioReportsSection';
 const SAMPLE_PYTHON_SCRIPTS = [
   {
     name: 'Gini Coefficient of PC Revenue',
-    description: 'Calculates the economic inequality/concentration of revenue across the 40 PC units',
+    description: 'Calculates the economic inequality/concentration of revenue across all PC units',
     code: `import urllib.request, json
 
-req = urllib.request.Request(
-    "https://hvtkxwzxjuoeewalptmq.supabase.co/rest/v1/sessions?select=pc_id,price",
-    headers={"apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2dGt4d3p4anVvZWV3YWxwdG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNjE4NTMsImV4cCI6MjEwNTgzNzg1M30.DVn4CeI1MIO4lH6qfEMYKZd8JkpRb5bHT0pNOKnqp7A"}
-)
-with urllib.request.urlopen(req) as resp:
-    sessions = json.loads(resp.read().decode())
+sessions, offset = [], 0
+headers = {"apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2dGt4d3p4anVvZWV3YWxwdG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNjE4NTMsImV4cCI6MjEwNTgzNzg1M30.DVn4CeI1MIO4lH6qfEMYKZd8JkpRb5bHT0pNOKnqp7A"}
+while True:
+    req = urllib.request.Request(
+        "https://hvtkxwzxjuoeewalptmq.supabase.co/rest/v1/sessions?select=pc_id,price",
+        headers={**headers, "Range": f"{offset}-{offset + 999}"}
+    )
+    with urllib.request.urlopen(req) as resp:
+        page = json.loads(resp.read().decode())
+    if not page: break
+    sessions.extend(page)
+    if len(page) < 1000: break
+    offset += 1000
 
 rev_per_pc = {}
 for s in sessions:
@@ -54,6 +61,7 @@ n = len(vals)
 gini = (2 * sum((i + 1) * y for i, y in enumerate(vals))) / (n * sum(vals)) - (n + 1) / n
 
 print(f"Total PCs Analyzed: {n}")
+print(f"Total Sessions Analyzed: {len(sessions)}")
 print(f"Revenue Range: ₱{min(vals):.2f} - ₱{max(vals):.2f}")
 print(f"Gini Coefficient: {gini:.4f} (Evenly balanced fleet revenue distribution)")
 `,
@@ -64,12 +72,19 @@ print(f"Gini Coefficient: {gini:.4f} (Evenly balanced fleet revenue distribution
     code: `import urllib.request, json, statistics
 from datetime import datetime
 
-req = urllib.request.Request(
-    "https://hvtkxwzxjuoeewalptmq.supabase.co/rest/v1/sessions?select=session_start",
-    headers={"apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2dGt4d3p4anVvZWV3YWxwdG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNjE4NTMsImV4cCI6MjEwNTgzNzg1M30.DVn4CeI1MIO4lH6qfEMYKZd8JkpRb5bHT0pNOKnqp7A"}
-)
-with urllib.request.urlopen(req) as resp:
-    data = json.loads(resp.read().decode())
+data, offset = [], 0
+headers = {"apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh2dGt4d3p4anVvZWV3YWxwdG1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNjE4NTMsImV4cCI6MjEwNTgzNzg1M30.DVn4CeI1MIO4lH6qfEMYKZd8JkpRb5bHT0pNOKnqp7A"}
+while True:
+    req = urllib.request.Request(
+        "https://hvtkxwzxjuoeewalptmq.supabase.co/rest/v1/sessions?select=session_start",
+        headers={**headers, "Range": f"{offset}-{offset + 999}"}
+    )
+    with urllib.request.urlopen(req) as resp:
+        page = json.loads(resp.read().decode())
+    if not page: break
+    data.extend(page)
+    if len(page) < 1000: break
+    offset += 1000
 
 hours = [datetime.fromisoformat(d["session_start"].split(".")[0]).hour for d in data if d.get("session_start")]
 
@@ -350,7 +365,10 @@ export const PythonAnalyticsTab: React.FC = () => {
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-center justify-between">
             <span>Growth Slope:</span>
-            <span className="text-blue-300 font-semibold">+{pythonAnalytics?.forecast?.revenue_growth_slope ?? '0.070'}</span>
+            <span className="text-blue-300 font-semibold">
+              {((pythonAnalytics?.forecast?.revenue_growth_slope ?? 0.07) >= 0 ? '+' : '')}
+              {pythonAnalytics?.forecast?.revenue_growth_slope ?? '0.070'}
+            </span>
           </div>
         </div>
 
@@ -689,7 +707,7 @@ export const PythonAnalyticsTab: React.FC = () => {
               </p>
             </div>
           </div>
-          <span className="text-xs font-mono text-slate-400">40 Fleet Units</span>
+          <span className="text-xs font-mono text-slate-400">{units.length} Fleet Units</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">

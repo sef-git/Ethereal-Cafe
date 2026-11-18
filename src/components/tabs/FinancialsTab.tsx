@@ -186,7 +186,9 @@ export const FinancialsTab: React.FC = () => {
           <div className="mt-2 text-2xl font-bold font-mono text-white tabular-nums">
             ₱{totalGross.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
-          <span className="mt-1 block text-[11px] text-slate-500 font-mono">140 verified audit cycles</span>
+          <span className="mt-1 block text-[11px] text-slate-500 font-mono">
+            {earnings.length.toLocaleString()} verified audit cycles
+          </span>
         </div>
 
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
