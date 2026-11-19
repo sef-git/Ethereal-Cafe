@@ -1094,7 +1094,7 @@ export const MainInterfaceTab: React.FC = () => {
       {/* Top Header (clean title without subtitle per prior rule) */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-white">Search / Add New</h1>
+          <h1 className="text-xl font-bold tracking-tight text-white">Cafe Log</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-slate-400">
           <span className="text-emerald-400">{availableUnits.length} Free PCs</span>
