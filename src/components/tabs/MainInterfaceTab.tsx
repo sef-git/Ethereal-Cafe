@@ -77,6 +77,281 @@ function getDefaultProvider(method: string): string {
   }
 }
 
+function doesUnitMatchCustomerStatus(
+  unit: { type?: string; area_location?: string },
+  customerStatus?: string
+): boolean {
+  const status = (customerStatus || 'Regular').trim().toLowerCase();
+  const typeLower = (unit.type || '').toLowerCase();
+  const locLower = (unit.area_location || '').toLowerCase();
+
+  if (status === 'vip') {
+    return typeLower.includes('vip') || locLower.includes('vip');
+  }
+  if (status === 'pro') {
+    return (
+      typeLower.includes('pro') ||
+      typeLower.includes('esports') ||
+      locLower.includes('pro') ||
+      locLower.includes('esports')
+    );
+  }
+  if (status === 'regular') {
+    return (
+      typeLower.includes('standard') ||
+      typeLower.includes('regular') ||
+      locLower.includes('main')
+    );
+  }
+  if (status === 'student') {
+    return (
+      typeLower.includes('student') ||
+      typeLower.includes('standard') ||
+      locLower.includes('student') ||
+      locLower.includes('main')
+    );
+  }
+  if (status.includes('stream')) {
+    return (
+      typeLower.includes('stream') ||
+      locLower.includes('booth') ||
+      locLower.includes('stream')
+    );
+  }
+  return typeLower.includes(status) || locLower.includes(status);
+}
+
+function unitAvailabilityRank(status?: string): number {
+  switch ((status || '').toLowerCase()) {
+    case 'available':
+      return 0;
+    case 'reserved':
+      return 1;
+    case 'in use':
+      return 2;
+    case 'maintenance':
+      return 3;
+    default:
+      return 4;
+  }
+}
+
+function filterUnitsByCustomerStatus<
+  T extends { pc_number?: string; type?: string; status?: string; area_location?: string }
+>(
+  allUnits: T[],
+  customerStatus?: string,
+  onlyAvailable = true
+): {
+  units: T[];
+  totalTierCount: number;
+  availableTierCount: number;
+  matchedTierOnly: boolean;
+  showingOnlyAvailable: boolean;
+  statusLabel: string;
+} {
+  const statusLabel = (customerStatus || 'Regular').trim() || 'Regular';
+  const matching = allUnits.filter((u) => doesUnitMatchCustomerStatus(u, statusLabel));
+  const sortUnits = (arr: T[]) =>
+    [...arr].sort((a, b) => {
+      const rankDiff = unitAvailabilityRank(a.status) - unitAvailabilityRank(b.status);
+      if (rankDiff !== 0) return rankDiff;
+      return (a.pc_number || '').localeCompare(b.pc_number || '');
+    });
+
+  const pool = matching.length > 0 ? matching : allUnits;
+  const availableInPool = pool.filter((u) => (u.status || '').toLowerCase() === 'available');
+  const useAvailOnly = onlyAvailable && availableInPool.length > 0;
+  const finalList = sortUnits(useAvailOnly ? availableInPool : pool);
+
+  return {
+    units: finalList,
+    totalTierCount: pool.length,
+    availableTierCount: availableInPool.length,
+    matchedTierOnly: matching.length > 0,
+    showingOnlyAvailable: useAvailOnly,
+    statusLabel,
+  };
+}
+
+function getDefaultUnitSpecsForStatus(customerStatus?: string): {
+  type: string;
+  area_location: string;
+} {
+  const status = (customerStatus || 'Regular').trim().toLowerCase();
+  if (status === 'vip') {
+    return { type: 'VIP Gaming PC', area_location: 'VIP Lounge' };
+  }
+  if (status === 'pro') {
+    return { type: 'Pro Esports Rig', area_location: 'Esports Zone' };
+  }
+  if (status.includes('stream')) {
+    return { type: 'Streaming Booth', area_location: 'Private Booths' };
+  }
+  return { type: 'Standard PC', area_location: 'Main Floor' };
+}
+
+interface VariationSelectFieldProps {
+  id?: string;
+  label?: string;
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  placeholder?: string;
+  variant?: 'chips' | 'select';
+  required?: boolean;
+  onPresetSelect?: (val: string) => void;
+  rightHint?: string;
+}
+
+const VariationSelectField: React.FC<VariationSelectFieldProps> = ({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+  placeholder = 'Type custom value...',
+  variant = 'select',
+  required = false,
+  onPresetSelect,
+  rightHint,
+}) => {
+  const isPreset = options.includes(value);
+  const [customMode, setCustomMode] = useState<boolean>(() => Boolean(value) && !options.includes(value));
+
+  useEffect(() => {
+    if (value && !options.includes(value)) {
+      setCustomMode(true);
+    }
+  }, [value, options]);
+
+  if (variant === 'chips') {
+    return (
+      <div className="space-y-1.5">
+        {label && (
+          <div className="flex items-center justify-between gap-2">
+            <label htmlFor={id} className="text-xs font-medium text-slate-300 block">
+              {label}
+            </label>
+            {rightHint && <span className="text-[11px] font-mono text-cyan-400">{rightHint}</span>}
+          </div>
+        )}
+        <div className="flex flex-wrap gap-1.5">
+          {options.map((opt) => {
+            const active = !customMode && value === opt;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => {
+                  setCustomMode(false);
+                  onChange(opt);
+                  onPresetSelect?.(opt);
+                }}
+                className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                  active
+                    ? 'bg-blue-600 text-white border border-blue-500 shadow-sm'
+                    : 'bg-[#090d16] text-slate-300 border border-slate-800 hover:text-white hover:border-slate-700'
+                }`}
+              >
+                {opt}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => {
+              setCustomMode(true);
+              if (isPreset) onChange('');
+            }}
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+              customMode || !isPreset
+                ? 'bg-cyan-600/20 text-cyan-300 border border-cyan-500/40'
+                : 'bg-[#090d16] text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'
+            }`}
+          >
+            + Custom
+          </button>
+        </div>
+        {(customMode || !isPreset) && (
+          <input
+            id={id}
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="w-full rounded-lg border border-cyan-500/40 bg-[#090d16] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+            required={required}
+          />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      {label && (
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor={id} className="text-xs font-medium text-slate-300 block">
+            {label}
+          </label>
+          {rightHint && <span className="text-[11px] font-mono text-slate-400">{rightHint}</span>}
+        </div>
+      )}
+      {customMode ? (
+        <div className="flex items-center gap-1.5">
+          <input
+            id={id}
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="w-full rounded-lg border border-cyan-500/40 bg-[#090d16] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+            required={required}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setCustomMode(false);
+              if (!value && options.length > 0) {
+                onChange(options[0]);
+                onPresetSelect?.(options[0]);
+              }
+            }}
+            className="rounded-lg border border-slate-700 bg-[#090d16] px-2.5 py-2 text-[11px] text-slate-300 hover:text-white hover:border-slate-600 whitespace-nowrap shrink-0"
+          >
+            List
+          </button>
+        </div>
+      ) : (
+        <select
+          id={id}
+          aria-label={label || placeholder}
+          value={isPreset ? value : '__CUSTOM__'}
+          onChange={(e) => {
+            if (e.target.value === '__CUSTOM__') {
+              setCustomMode(true);
+              onChange('');
+            } else {
+              onChange(e.target.value);
+              onPresetSelect?.(e.target.value);
+            }
+          }}
+          className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+          required={required}
+        >
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+          <option value="__CUSTOM__">+ Custom / Type new...</option>
+        </select>
+      )}
+    </div>
+  );
+};
+
 export const MainInterfaceTab: React.FC = () => {
   const {
     customers,
@@ -148,7 +423,7 @@ export const MainInterfaceTab: React.FC = () => {
   }, [payments]);
 
   const distinctSessionStatuses = useMemo(() => {
-    const s = new Set(['Pending', 'Paid', 'Cancelled']);
+    const s = new Set(['Pending', 'Paid', 'Unpaid', 'Cancelled']);
     sessions.forEach((sess) => sess.payment_status && s.add(sess.payment_status));
     return Array.from(s);
   }, [sessions]);
@@ -205,6 +480,7 @@ export const MainInterfaceTab: React.FC = () => {
   const [newSessPcNumber, setNewSessPcNumber] = useState('');
   const [newSessPcType, setNewSessPcType] = useState('Standard PC');
   const [newSessPcLocation, setNewSessPcLocation] = useState('Main Floor');
+  const [newSessPcStatus, setNewSessPcStatus] = useState('Available');
 
   const [sessEmpMode, setSessEmpMode] = useState<ExistingOrNew>('existing');
   const [sessEmployeeId, setSessEmployeeId] = useState<string>('');
@@ -227,6 +503,17 @@ export const MainInterfaceTab: React.FC = () => {
   const [sessPayProvider, setSessPayProvider] = useState<string>('Over-The-Counter');
   const [sessExpenses, setSessExpenses] = useState<string>('17.50');
 
+  const activeSessCustomerStatus = useMemo(() => {
+    if (sessCustMode === 'new') return newSessCustTier.trim() || 'Regular';
+    const found = customers.find((c) => String(c.customer_id) === sessCustomerId);
+    return found?.membership || 'Regular';
+  }, [sessCustMode, newSessCustTier, customers, sessCustomerId]);
+
+  const sessCompatibleUnits = useMemo(
+    () => filterUnitsByCustomerStatus(units, activeSessCustomerStatus, true),
+    [units, activeSessCustomerStatus]
+  );
+
   useEffect(() => {
     if (!sessCustomerId && customers.length > 0) {
       setSessCustomerId(String(customers[0].customer_id));
@@ -234,19 +521,34 @@ export const MainInterfaceTab: React.FC = () => {
     if (!sessEmployeeId && employees.length > 0) {
       setSessEmployeeId(String(employees[0].employee_id));
     }
-    if (!sessPcId && units.length > 0) {
-      const firstAvail = units.find((u) => u.status === 'Available') || units[0];
-      setSessPcId(String(firstAvail.pc_id));
-      const rate = getSuggestedRate(firstAvail.type);
-      setSessHourlyRate(rate);
-      const initialPrice = rate * sessDurationHrs;
-      setSessPrice(initialPrice.toFixed(2));
-      setSessExpenses((initialPrice * 0.35).toFixed(2));
-    }
     if (!newSessPcNumber && units.length > 0) {
       setNewSessPcNumber(`PC-${String(units.length + 1).padStart(2, '0')}`);
     }
-  }, [customers, employees, units, sessCustomerId, sessEmployeeId, sessPcId, sessDurationHrs, newSessPcNumber]);
+  }, [customers, employees, units, sessCustomerId, sessEmployeeId, newSessPcNumber]);
+
+  // Keep selected PC & rate synced to compatible PCs for the active customer's status
+  useEffect(() => {
+    if (sessPcMode !== 'existing') return;
+    const compatible = sessCompatibleUnits.units;
+    if (compatible.length === 0) return;
+    const stillValid = compatible.some((u) => String(u.pc_id) === sessPcId);
+    if (!stillValid) {
+      const preferred = compatible.find((u) => u.status === 'Available') || compatible[0];
+      setSessPcId(String(preferred.pc_id));
+      const rate = getSuggestedRate(preferred.type);
+      setSessHourlyRate(rate);
+      const nextPrice = rate * sessDurationHrs;
+      setSessPrice(nextPrice.toFixed(2));
+      setSessExpenses((nextPrice * 0.35).toFixed(2));
+    }
+  }, [sessCompatibleUnits, sessPcId, sessPcMode, sessDurationHrs]);
+
+  // Keep new inline PC tier & location defaults aligned with the selected customer status
+  useEffect(() => {
+    const defaults = getDefaultUnitSpecsForStatus(activeSessCustomerStatus);
+    setNewSessPcType(defaults.type);
+    setNewSessPcLocation(defaults.area_location);
+  }, [activeSessCustomerStatus]);
 
   const filteredCustomerOptions = useMemo(() => {
     const q = custSearch.trim().toLowerCase();
@@ -297,10 +599,19 @@ export const MainInterfaceTab: React.FC = () => {
   const [foodSessionMode, setFoodSessionMode] = useState<ExistingOrNew>('existing');
   const [foodSessionSearch, setFoodSessionSearch] = useState('');
   const [foodSessionId, setFoodSessionId] = useState<string>('');
+  const [foodCustMode, setFoodCustMode] = useState<ExistingOrNew>('existing');
   const [walkinFoodCustId, setWalkinFoodCustId] = useState<string>('');
+  const [newFoodCustFirst, setNewFoodCustFirst] = useState('');
+  const [newFoodCustLast, setNewFoodCustLast] = useState('');
+  const [newFoodCustTier, setNewFoodCustTier] = useState('Regular');
+  const [foodPcMode, setFoodPcMode] = useState<ExistingOrNew>('existing');
   const [walkinFoodPcId, setWalkinFoodPcId] = useState<string>('');
+  const [newFoodPcNumber, setNewFoodPcNumber] = useState('');
+  const [newFoodPcType, setNewFoodPcType] = useState('Standard PC');
+  const [newFoodPcLocation, setNewFoodPcLocation] = useState('Main Floor');
   const [walkinFoodEmpId, setWalkinFoodEmpId] = useState<string>('');
   const [walkinFoodSessPrice, setWalkinFoodSessPrice] = useState<string>('50.00');
+  const [walkinFoodSessStatus, setWalkinFoodSessStatus] = useState<string>('Pending');
 
   const [foodProductMode, setFoodProductMode] = useState<ExistingOrNew>('existing');
   const [foodProductId, setFoodProductId] = useState<string>('');
@@ -311,6 +622,17 @@ export const MainInterfaceTab: React.FC = () => {
 
   const [foodQty, setFoodQty] = useState<number>(1);
   const [foodSubtotal, setFoodSubtotal] = useState<string>('0.00');
+
+  const activeFoodCustomerStatus = useMemo(() => {
+    if (foodCustMode === 'new') return newFoodCustTier.trim() || 'Regular';
+    const found = customers.find((c) => String(c.customer_id) === walkinFoodCustId);
+    return found?.membership || 'Regular';
+  }, [foodCustMode, newFoodCustTier, customers, walkinFoodCustId]);
+
+  const foodCompatibleUnits = useMemo(
+    () => filterUnitsByCustomerStatus(units, activeFoodCustomerStatus),
+    [units, activeFoodCustomerStatus]
+  );
 
   useEffect(() => {
     if (!foodSessionId && sessions.length > 0) {
@@ -323,11 +645,10 @@ export const MainInterfaceTab: React.FC = () => {
       setFoodSubtotal((Number(inStock.unit_price) || 0).toFixed(2));
     }
     if (!walkinFoodCustId && customers.length > 0) setWalkinFoodCustId(String(customers[0].customer_id));
-    if (!walkinFoodPcId && units.length > 0) {
-      const av = units.find((u) => u.status === 'Available') || units[0];
-      setWalkinFoodPcId(String(av.pc_id));
-    }
     if (!walkinFoodEmpId && employees.length > 0) setWalkinFoodEmpId(String(employees[0].employee_id));
+    if (!newFoodPcNumber && units.length > 0) {
+      setNewFoodPcNumber(`PC-${String(units.length + 1).padStart(2, '0')}`);
+    }
   }, [
     sessions,
     pendingSessions,
@@ -338,9 +659,25 @@ export const MainInterfaceTab: React.FC = () => {
     foodSessionId,
     foodProductId,
     walkinFoodCustId,
-    walkinFoodPcId,
     walkinFoodEmpId,
+    newFoodPcNumber,
   ]);
+
+  useEffect(() => {
+    if (foodPcMode !== 'existing') return;
+    const compatible = foodCompatibleUnits.units;
+    if (compatible.length === 0) return;
+    if (!compatible.some((u) => String(u.pc_id) === walkinFoodPcId)) {
+      const preferred = compatible.find((u) => u.status === 'Available') || compatible[0];
+      setWalkinFoodPcId(String(preferred.pc_id));
+    }
+  }, [foodCompatibleUnits, walkinFoodPcId, foodPcMode]);
+
+  useEffect(() => {
+    const defaults = getDefaultUnitSpecsForStatus(activeFoodCustomerStatus);
+    setNewFoodPcType(defaults.type);
+    setNewFoodPcLocation(defaults.area_location);
+  }, [activeFoodCustomerStatus]);
 
   const selectedFoodProduct = useMemo(
     () => products.find((p) => String(p.product_id) === foodProductId) || null,
@@ -369,8 +706,16 @@ export const MainInterfaceTab: React.FC = () => {
   // ---------- 3. PAYMENT SETTLEMENT STATE (Existing OR Walk-In New Session) ----------
   const [paySessionMode, setPaySessionMode] = useState<ExistingOrNew>('existing');
   const [paySessionId, setPaySessionId] = useState<string>('');
+  const [payCustMode, setPayCustMode] = useState<ExistingOrNew>('existing');
   const [payWalkinCustId, setPayWalkinCustId] = useState<string>('');
+  const [newPayCustFirst, setNewPayCustFirst] = useState('');
+  const [newPayCustLast, setNewPayCustLast] = useState('');
+  const [newPayCustTier, setNewPayCustTier] = useState('Regular');
+  const [payPcMode, setPayPcMode] = useState<ExistingOrNew>('existing');
   const [payWalkinPcId, setPayWalkinPcId] = useState<string>('');
+  const [newPayPcNumber, setNewPayPcNumber] = useState('');
+  const [newPayPcType, setNewPayPcType] = useState('Standard PC');
+  const [newPayPcLocation, setNewPayPcLocation] = useState('Main Floor');
   const [payWalkinEmpId, setPayWalkinEmpId] = useState<string>('');
   const [payWalkinPrice, setPayWalkinPrice] = useState<string>('75.00');
 
@@ -380,6 +725,17 @@ export const MainInterfaceTab: React.FC = () => {
   const [payGross, setPayGross] = useState<string>('0.00');
   const [payExpenses, setPayExpenses] = useState<string>('0.00');
   const [payReleasePc, setPayReleasePc] = useState<boolean>(true);
+
+  const activePayCustomerStatus = useMemo(() => {
+    if (payCustMode === 'new') return newPayCustTier.trim() || 'Regular';
+    const found = customers.find((c) => String(c.customer_id) === payWalkinCustId);
+    return found?.membership || 'Regular';
+  }, [payCustMode, newPayCustTier, customers, payWalkinCustId]);
+
+  const payCompatibleUnits = useMemo(
+    () => filterUnitsByCustomerStatus(units, activePayCustomerStatus),
+    [units, activePayCustomerStatus]
+  );
 
   const applyPaymentSessionDefaults = (sidStr: string) => {
     setPaySessionId(sidStr);
@@ -400,8 +756,10 @@ export const MainInterfaceTab: React.FC = () => {
       applyPaymentSessionDefaults(String(target.session_id));
     }
     if (!payWalkinCustId && customers.length > 0) setPayWalkinCustId(String(customers[0].customer_id));
-    if (!payWalkinPcId && units.length > 0) setPayWalkinPcId(String(units[0].pc_id));
     if (!payWalkinEmpId && employees.length > 0) setPayWalkinEmpId(String(employees[0].employee_id));
+    if (!newPayPcNumber && units.length > 0) {
+      setNewPayPcNumber(`PC-${String(units.length + 1).padStart(2, '0')}`);
+    }
   }, [
     sessions,
     pendingSessions,
@@ -411,9 +769,25 @@ export const MainInterfaceTab: React.FC = () => {
     units,
     employees,
     payWalkinCustId,
-    payWalkinPcId,
     payWalkinEmpId,
+    newPayPcNumber,
   ]);
+
+  useEffect(() => {
+    if (payPcMode !== 'existing') return;
+    const compatible = payCompatibleUnits.units;
+    if (compatible.length === 0) return;
+    if (!compatible.some((u) => String(u.pc_id) === payWalkinPcId)) {
+      const preferred = compatible.find((u) => u.status === 'Available') || compatible[0];
+      setPayWalkinPcId(String(preferred.pc_id));
+    }
+  }, [payCompatibleUnits, payWalkinPcId, payPcMode]);
+
+  useEffect(() => {
+    const defaults = getDefaultUnitSpecsForStatus(activePayCustomerStatus);
+    setNewPayPcType(defaults.type);
+    setNewPayPcLocation(defaults.area_location);
+  }, [activePayCustomerStatus]);
 
   const sortedSessionsForDesk = useMemo(() => {
     const q = foodSessionSearch.trim().toLowerCase();
@@ -533,7 +907,6 @@ export const MainInterfaceTab: React.FC = () => {
 
       // 2. Resolve or create PC Unit
       let resolvedPcId: number;
-      let resolvedPcLabel = '';
       if (sessPcMode === 'new') {
         if (!newSessPcNumber.trim()) {
           throw new Error('Enter a PC station number (e.g. PC-56).');
@@ -542,18 +915,15 @@ export const MainInterfaceTab: React.FC = () => {
           {
             pc_number: newSessPcNumber,
             type: newSessPcType.trim() || 'Standard PC',
-            status: sessPaymentStatus === 'Pending' ? 'In Use' : 'Available',
+            status: newSessPcStatus.trim() || (sessPaymentStatus === 'Pending' ? 'In Use' : 'Available'),
             area_location: newSessPcLocation.trim() || 'Main Floor',
           },
           units
         );
         resolvedPcId = createdUnit.pc_id;
-        resolvedPcLabel = createdUnit.pc_number;
       } else {
         if (!sessPcId) throw new Error('Select a PC station.');
         resolvedPcId = parseInt(sessPcId, 10);
-        resolvedPcLabel =
-          units.find((u) => u.pc_id === resolvedPcId)?.pc_number || `PC #${resolvedPcId}`;
       }
 
       // 3. Resolve or create Employee
@@ -626,11 +996,7 @@ export const MainInterfaceTab: React.FC = () => {
       setNewSessEmpLast('');
       setNewSessEmpAddress('');
 
-      showSuccess(
-        `Session #${res.session.session_id} added on ${resolvedPcLabel} (${sessPaymentStatus} · ₱${priceNum.toFixed(
-          2
-        )}). All tables and charts updated.`
-      );
+      showSuccess('New session is added.');
       setFoodSessionId(String(res.session.session_id));
       if (sessPaymentStatus === 'Pending') {
         setPaySessionId(String(res.session.session_id));
@@ -660,21 +1026,65 @@ export const MainInterfaceTab: React.FC = () => {
       let resolvedSessionId: number;
       if (foodSessionMode === 'new') {
         const sessFee = parseFloat(walkinFoodSessPrice);
-        if (!walkinFoodCustId || !walkinFoodPcId || !walkinFoodEmpId || isNaN(sessFee) || sessFee < 0) {
-          throw new Error('Complete customer, PC, staff, and session fee for the new session.');
+        if (isNaN(sessFee) || sessFee < 0 || !walkinFoodEmpId) {
+          throw new Error('Enter a valid session fee and staff member for the new session.');
         }
+
+        let resolvedFoodCustId: number;
+        if (foodCustMode === 'new') {
+          if (!newFoodCustFirst.trim() || !newFoodCustLast.trim()) {
+            throw new Error('Enter first and last name for the new customer.');
+          }
+          const createdCust = await createCustomerRecord(
+            {
+              first_name: newFoodCustFirst,
+              last_name: newFoodCustLast,
+              phone_number: '09000000000',
+              email_address: `${newFoodCustFirst.toLowerCase().replace(/\s+/g, '')}.${newFoodCustLast
+                .toLowerCase()
+                .replace(/\s+/g, '')}@gmail.com`,
+              membership: newFoodCustTier.trim() || 'Regular',
+            },
+            customers
+          );
+          resolvedFoodCustId = createdCust.customer_id;
+        } else {
+          if (!walkinFoodCustId) throw new Error('Select a customer for the new session.');
+          resolvedFoodCustId = parseInt(walkinFoodCustId, 10);
+        }
+
+        let resolvedFoodPcId: number;
+        if (foodPcMode === 'new') {
+          if (!newFoodPcNumber.trim()) {
+            throw new Error('Enter a PC station number (e.g. PC-56).');
+          }
+          const createdUnit = await createUnitRecord(
+            {
+              pc_number: newFoodPcNumber,
+              type: newFoodPcType.trim() || 'Standard PC',
+              status: walkinFoodSessStatus === 'Pending' ? 'In Use' : 'Available',
+              area_location: newFoodPcLocation.trim() || 'Main Floor',
+            },
+            units
+          );
+          resolvedFoodPcId = createdUnit.pc_id;
+        } else {
+          if (!walkinFoodPcId) throw new Error('Select a compatible PC station for the new session.');
+          resolvedFoodPcId = parseInt(walkinFoodPcId, 10);
+        }
+
         const startNow = getCurrentTimeHHMM();
         const endNow = addHoursToHHMM(startNow, 2);
         const createdSess = await createSessionRecord(
           {
-            customer_id: parseInt(walkinFoodCustId, 10),
-            pc_id: parseInt(walkinFoodPcId, 10),
+            customer_id: resolvedFoodCustId,
+            pc_id: resolvedFoodPcId,
             employee_id: parseInt(walkinFoodEmpId, 10),
             date: todayStr,
             session_start: `${todayStr}T${startNow}:00`,
             session_end: `${todayStr}T${endNow}:00`,
             price: sessFee,
-            payment_status: 'Pending',
+            payment_status: walkinFoodSessStatus.trim() || 'Pending',
             updatePcStatus: true,
           },
           { sessions, payments, earnings }
@@ -687,7 +1097,6 @@ export const MainInterfaceTab: React.FC = () => {
 
       // 2. Resolve or create Product
       let resolvedProductId: number;
-      let resolvedProductName: string;
       let currentStock: number;
 
       if (foodProductMode === 'new') {
@@ -708,7 +1117,6 @@ export const MainInterfaceTab: React.FC = () => {
           products
         );
         resolvedProductId = createdProd.product_id;
-        resolvedProductName = createdProd.product_name;
         currentStock = createdProd.stock_quantity;
       } else {
         if (!selectedFoodProduct) throw new Error('Please select a menu item.');
@@ -718,7 +1126,6 @@ export const MainInterfaceTab: React.FC = () => {
           );
         }
         resolvedProductId = selectedFoodProduct.product_id;
-        resolvedProductName = selectedFoodProduct.product_name;
         currentStock = Number(selectedFoodProduct.stock_quantity) || 0;
       }
 
@@ -736,15 +1143,15 @@ export const MainInterfaceTab: React.FC = () => {
       await syncSilent();
       setFoodSessionMode('existing');
       setFoodSessionId(String(resolvedSessionId));
+      setFoodCustMode('existing');
+      setFoodPcMode('existing');
+      setNewFoodCustFirst('');
+      setNewFoodCustLast('');
       setFoodProductMode('existing');
       setFoodProductId(String(resolvedProductId));
       setNewFoodProdName('');
       setFoodQty(1);
-      showSuccess(
-        `Added ${foodQty}x ${resolvedProductName} (₱${subtotalNum.toFixed(
-          2
-        )}) to Session #${resolvedSessionId}. Inventory & customer totals updated.`
-      );
+      showSuccess('New food order is added.');
     } catch (err) {
       showError(err);
     } finally {
@@ -770,15 +1177,59 @@ export const MainInterfaceTab: React.FC = () => {
 
       if (paySessionMode === 'new') {
         const fee = parseFloat(payWalkinPrice);
-        if (!payWalkinCustId || !payWalkinPcId || !payWalkinEmpId || isNaN(fee) || fee < 0) {
-          throw new Error('Select customer, PC, staff, and session fee for the new session.');
+        if (!payWalkinEmpId || isNaN(fee) || fee < 0) {
+          throw new Error('Select staff and a valid session fee for the new session.');
         }
+
+        let resolvedPayCustId: number;
+        if (payCustMode === 'new') {
+          if (!newPayCustFirst.trim() || !newPayCustLast.trim()) {
+            throw new Error('Enter first and last name for the new customer.');
+          }
+          const createdCust = await createCustomerRecord(
+            {
+              first_name: newPayCustFirst,
+              last_name: newPayCustLast,
+              phone_number: '09000000000',
+              email_address: `${newPayCustFirst.toLowerCase().replace(/\s+/g, '')}.${newPayCustLast
+                .toLowerCase()
+                .replace(/\s+/g, '')}@gmail.com`,
+              membership: newPayCustTier.trim() || 'Regular',
+            },
+            customers
+          );
+          resolvedPayCustId = createdCust.customer_id;
+        } else {
+          if (!payWalkinCustId) throw new Error('Select a customer for the new session.');
+          resolvedPayCustId = parseInt(payWalkinCustId, 10);
+        }
+
+        let resolvedPayPcId: number;
+        if (payPcMode === 'new') {
+          if (!newPayPcNumber.trim()) {
+            throw new Error('Enter a PC station number (e.g. PC-56).');
+          }
+          const createdUnit = await createUnitRecord(
+            {
+              pc_number: newPayPcNumber,
+              type: newPayPcType.trim() || 'Standard PC',
+              status: 'Available',
+              area_location: newPayPcLocation.trim() || 'Main Floor',
+            },
+            units
+          );
+          resolvedPayPcId = createdUnit.pc_id;
+        } else {
+          if (!payWalkinPcId) throw new Error('Select a compatible PC station for the new session.');
+          resolvedPayPcId = parseInt(payWalkinPcId, 10);
+        }
+
         const nowHm = getCurrentTimeHHMM();
         const endHm = addHoursToHHMM(nowHm, 2);
         const createdSess = await createSessionRecord(
           {
-            customer_id: parseInt(payWalkinCustId, 10),
-            pc_id: parseInt(payWalkinPcId, 10),
+            customer_id: resolvedPayCustId,
+            pc_id: resolvedPayPcId,
             employee_id: parseInt(payWalkinEmpId, 10),
             date: payDate,
             session_start: `${payDate}T${nowHm}:00`,
@@ -800,7 +1251,7 @@ export const MainInterfaceTab: React.FC = () => {
       const nowTime = getCurrentTimeHHMM();
       const ts = `${payDate}T${nowTime}:00`;
 
-      const res = await recordSessionPaymentAndEarning(
+      await recordSessionPaymentAndEarning(
         {
           session_id: targetSessionId,
           pc_id: targetPcId,
@@ -818,11 +1269,11 @@ export const MainInterfaceTab: React.FC = () => {
       await syncSilent();
       setPaySessionMode('existing');
       setPaySessionId('');
-      showSuccess(
-        `Payment #${res.payment.payments_id} recorded for Session #${targetSessionId} (₱${grossNum.toFixed(
-          2
-        )} via ${payMethod}). Financials & analytics updated.`
-      );
+      setPayCustMode('existing');
+      setPayPcMode('existing');
+      setNewPayCustFirst('');
+      setNewPayCustLast('');
+      showSuccess('New payment is added.');
     } catch (err) {
       showError(err);
     } finally {
@@ -862,9 +1313,7 @@ export const MainInterfaceTab: React.FC = () => {
       setCustLastName('');
       setCustPhone('');
       setCustEmail('');
-      showSuccess(
-        `Customer #${created.customer_id} (${created.first_name} ${created.last_name} · ${created.membership}) added to Supabase.`
-      );
+      showSuccess('New customer is added.');
     } catch (err) {
       showError(err);
     } finally {
@@ -901,9 +1350,7 @@ export const MainInterfaceTab: React.FC = () => {
       setEmpMiddleInitial('');
       setEmpLastName('');
       setEmpAddress('');
-      showSuccess(
-        `Employee #${created.employee_id} (${created.first_name} ${created.last_name} · ${created.shifts} Shift) added to Staff Roster.`
-      );
+      showSuccess('New employee is added.');
     } catch (err) {
       showError(err);
     } finally {
@@ -921,7 +1368,7 @@ export const MainInterfaceTab: React.FC = () => {
         if (!unitNumber.trim()) {
           throw new Error('PC station number is required (e.g. PC-56).');
         }
-        const created = await createUnitRecord(
+        await createUnitRecord(
           {
             pc_number: unitNumber,
             type: unitType.trim() || 'Standard PC',
@@ -932,16 +1379,14 @@ export const MainInterfaceTab: React.FC = () => {
         );
         await syncSilent();
         setUnitNumber(`PC-${String(units.length + 2).padStart(2, '0')}`);
-        showSuccess(
-          `PC Station ${created.pc_number} (${created.type} · ${created.area_location}) added to Floor Matrix.`
-        );
+        showSuccess('New PC unit is added.');
       } else if (catalogMode === 'product') {
         const priceNum = parseFloat(prodPrice);
         const stockNum = parseInt(prodStock, 10);
         if (!prodName.trim() || isNaN(priceNum) || priceNum <= 0 || isNaN(stockNum) || stockNum < 0) {
           throw new Error('Enter a valid product name, positive price, and stock quantity.');
         }
-        const created = await createProductRecord(
+        await createProductRecord(
           {
             product_name: prodName,
             category: prodCategory.trim() || 'Snacks',
@@ -952,11 +1397,7 @@ export const MainInterfaceTab: React.FC = () => {
         );
         await syncSilent();
         setProdName('');
-        showSuccess(
-          `Menu item "${created.product_name}" (${created.category} · ₱${priceNum.toFixed(
-            2
-          )}) added to Cafe Concessions.`
-        );
+        showSuccess('New menu item is added.');
       } else {
         const prod = products.find((p) => String(p.product_id) === restockProductId);
         const qtyNum = parseInt(restockQty, 10);
@@ -965,11 +1406,7 @@ export const MainInterfaceTab: React.FC = () => {
         }
         await restockProductRecord(prod.product_id, Number(prod.stock_quantity) || 0, qtyNum);
         await syncSilent();
-        showSuccess(
-          `Restocked ${prod.product_name} (+${qtyNum} units → ${
-            (Number(prod.stock_quantity) || 0) + qtyNum
-          } total).`
-        );
+        showSuccess('Product stock is updated.');
       }
     } catch (err) {
       showError(err);
@@ -1006,8 +1443,39 @@ export const MainInterfaceTab: React.FC = () => {
   };
 
   const jumpToAssignPc = (pcId: number) => {
+    const targetUnit = units.find((u) => u.pc_id === pcId);
     setActiveSection('session');
     setSessPcMode('existing');
+    if (targetUnit) {
+      if (sessCustMode === 'new') {
+        if (!doesUnitMatchCustomerStatus(targetUnit, newSessCustTier)) {
+          const tLower = (targetUnit.type || '').toLowerCase();
+          if (tLower.includes('vip')) setNewSessCustTier('VIP');
+          else if (tLower.includes('pro') || tLower.includes('esports')) setNewSessCustTier('PRO');
+          else setNewSessCustTier('Regular');
+        }
+      } else {
+        const currentCust = customers.find((c) => String(c.customer_id) === sessCustomerId);
+        if (!currentCust || !doesUnitMatchCustomerStatus(targetUnit, currentCust.membership)) {
+          const matchingCust = customers.find((c) =>
+            doesUnitMatchCustomerStatus(targetUnit, c.membership)
+          );
+          if (matchingCust) {
+            setSessCustomerId(String(matchingCust.customer_id));
+          } else {
+            setSessCustMode('new');
+            const tLower = (targetUnit.type || '').toLowerCase();
+            setNewSessCustTier(
+              tLower.includes('vip')
+                ? 'VIP'
+                : tLower.includes('pro') || tLower.includes('esports')
+                ? 'PRO'
+                : 'Regular'
+            );
+          }
+        }
+      }
+    }
     handlePcSelectionChange(String(pcId));
     setFeedback(null);
   };
@@ -1044,52 +1512,6 @@ export const MainInterfaceTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Shared HTML datalists allowing either picking existing values OR manually typing new values */}
-      <datalist id="tier-list">
-        {distinctMemberships.map((m) => (
-          <option key={m} value={m} />
-        ))}
-      </datalist>
-      <datalist id="emp-shift-list">
-        {distinctShifts.map((sh) => (
-          <option key={sh} value={sh} />
-        ))}
-      </datalist>
-      <datalist id="unit-type-list">
-        {distinctUnitTypes.map((t) => (
-          <option key={t} value={t} />
-        ))}
-      </datalist>
-      <datalist id="unit-loc-list">
-        {distinctUnitLocations.map((l) => (
-          <option key={l} value={l} />
-        ))}
-      </datalist>
-      <datalist id="unit-status-list">
-        {distinctUnitStatuses.map((st) => (
-          <option key={st} value={st} />
-        ))}
-      </datalist>
-      <datalist id="prod-cat-list">
-        {distinctCategories.map((c) => (
-          <option key={c} value={c} />
-        ))}
-      </datalist>
-      <datalist id="pay-method-list">
-        {distinctPaymentMethods.map((pm) => (
-          <option key={pm} value={pm} />
-        ))}
-      </datalist>
-      <datalist id="pay-provider-list">
-        {distinctPaymentProviders.map((pr) => (
-          <option key={pr} value={pr} />
-        ))}
-      </datalist>
-      <datalist id="session-status-list">
-        {distinctSessionStatuses.map((ss) => (
-          <option key={ss} value={ss} />
-        ))}
-      </datalist>
 
       {/* Top Header (clean title without subtitle per prior rule) */}
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
@@ -1304,13 +1726,15 @@ export const MainInterfaceTab: React.FC = () => {
                       className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs font-mono text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
                     />
                     <div className="sm:col-span-2">
-                      <input
-                        type="text"
-                        list="tier-list"
+                      <VariationSelectField
+                        id="new-sess-cust-tier"
+                        label="Customer Status / Membership"
                         value={newSessCustTier}
-                        onChange={(e) => setNewSessCustTier(e.target.value)}
-                        placeholder="Membership Tier (select or type new)"
-                        className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                        onChange={setNewSessCustTier}
+                        options={distinctMemberships}
+                        placeholder="Enter custom customer status"
+                        variant="chips"
+                        required
                       />
                     </div>
                   </div>
@@ -1327,7 +1751,7 @@ export const MainInterfaceTab: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setSessPcMode('new')}
-                        className="inline-flex items-center gap-1 rounded-md border border-blue-500/40 bg-blue-950/40 px-2.5 py-0.5 text-[11px] font-medium text-blue-300 hover:bg-blue-600 hover:text-white transition-colors whitespace-nowrap"
+                        className="inline-flex items-center gap-1 rounded-md border border-blue-500/40 bg-blue-950/40 px-2.5 py-0.5 text-[11px] font-medium text-blue-300 hover:bg-blue-600 hover:text-white transition-colors whitespace-nowrap shrink-0"
                       >
                         + New
                       </button>
@@ -1335,7 +1759,7 @@ export const MainInterfaceTab: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setSessPcMode('existing')}
-                        className="rounded-md border border-slate-700 bg-[#090d16] px-2.5 py-0.5 text-[11px] text-slate-300 hover:text-white hover:border-slate-600 transition-colors whitespace-nowrap"
+                        className="rounded-md border border-slate-700 bg-[#090d16] px-2.5 py-0.5 text-[11px] text-slate-300 hover:text-white hover:border-slate-600 transition-colors whitespace-nowrap shrink-0"
                       >
                         Cancel
                       </button>
@@ -1350,7 +1774,7 @@ export const MainInterfaceTab: React.FC = () => {
                       className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                       required
                     >
-                      {units.map((u) => (
+                      {sessCompatibleUnits.units.map((u) => (
                         <option key={u.pc_id} value={u.pc_id}>
                           {u.pc_number} · {u.type} ({u.area_location}) — [{u.status}]
                         </option>
@@ -1366,22 +1790,29 @@ export const MainInterfaceTab: React.FC = () => {
                         className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs font-mono text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
                         required
                       />
-                      <input
-                        type="text"
-                        list="unit-type-list"
+                      <VariationSelectField
                         value={newSessPcType}
-                        onChange={(e) => setNewSessPcType(e.target.value)}
-                        placeholder="Tier (Standard PC, VIP, or new)"
-                        className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                        onChange={setNewSessPcType}
+                        options={distinctUnitTypes}
+                        placeholder="Custom PC type..."
+                        required
                       />
-                      <input
-                        type="text"
-                        list="unit-loc-list"
-                        value={newSessPcLocation}
-                        onChange={(e) => setNewSessPcLocation(e.target.value)}
-                        placeholder="Area Location (or type new)"
-                        className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
-                      />
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <VariationSelectField
+                          value={newSessPcLocation}
+                          onChange={setNewSessPcLocation}
+                          options={distinctUnitLocations}
+                          placeholder="Custom zone..."
+                          required
+                        />
+                        <VariationSelectField
+                          value={newSessPcStatus}
+                          onChange={setNewSessPcStatus}
+                          options={distinctUnitStatuses}
+                          placeholder="Custom status..."
+                          required
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1452,13 +1883,12 @@ export const MainInterfaceTab: React.FC = () => {
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-1.5">
-                        <input
-                          type="text"
-                          list="emp-shift-list"
+                        <VariationSelectField
                           value={newSessEmpShift}
-                          onChange={(e) => setNewSessEmpShift(e.target.value)}
-                          placeholder="Shift"
-                          className="rounded-lg border border-slate-800 bg-[#090d16] px-2.5 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                          onChange={setNewSessEmpShift}
+                          options={distinctShifts}
+                          placeholder="Custom shift..."
+                          required
                         />
                         <input
                           type="date"
@@ -1547,7 +1977,7 @@ export const MainInterfaceTab: React.FC = () => {
                 <div className="space-y-1.5">
                   <span className="text-xs font-medium text-slate-400 block">Hourly Rate Preset</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {[25, 35, 50, 60].map((rate) => (
+                    {[25, 35, 45, 50, 60].map((rate) => (
                       <button
                         key={rate}
                         type="button"
@@ -1587,59 +2017,44 @@ export const MainInterfaceTab: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="sess-status" className="text-xs font-medium text-slate-300 block">
-                    Payment Status
-                  </label>
-                  <input
-                    id="sess-status"
-                    type="text"
-                    list="session-status-list"
-                    value={sessPaymentStatus}
-                    onChange={(e) => setSessPaymentStatus(e.target.value)}
-                    placeholder="Pending, Paid, or custom"
-                    className="w-full rounded-lg border border-slate-800 bg-[#060a12] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
+                <VariationSelectField
+                  id="sess-status"
+                  label="Payment Status"
+                  value={sessPaymentStatus}
+                  onChange={setSessPaymentStatus}
+                  options={distinctSessionStatuses}
+                  placeholder="Enter custom payment status"
+                  variant="chips"
+                  required
+                />
               </div>
 
               {/* Instant Payment Fields when Prepaid / Paid */}
               {sessPaymentStatus === 'Paid' && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-lg border border-slate-800 bg-[#060a12] p-3.5">
-                  <div className="space-y-1.5">
-                    <label htmlFor="sess-pay-method" className="text-xs font-medium text-slate-300 block">
-                      Payment Method
-                    </label>
-                    <input
-                      id="sess-pay-method"
-                      type="text"
-                      list="pay-method-list"
-                      value={sessPayMethod}
-                      onChange={(e) => {
-                        setSessPayMethod(e.target.value);
-                        const def = getDefaultProvider(e.target.value);
-                        if (def) setSessPayProvider(def);
-                      }}
-                      placeholder="Cash, GCash, or new"
-                      className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
+                  <VariationSelectField
+                    id="sess-pay-method"
+                    label="Payment Method"
+                    value={sessPayMethod}
+                    onChange={(val) => {
+                      setSessPayMethod(val);
+                      const def = getDefaultProvider(val);
+                      if (def) setSessPayProvider(def);
+                    }}
+                    options={distinctPaymentMethods}
+                    placeholder="Custom method..."
+                    required
+                  />
 
-                  <div className="space-y-1.5">
-                    <label htmlFor="sess-pay-provider" className="text-xs font-medium text-slate-300 block">
-                      Provider Channel
-                    </label>
-                    <input
-                      id="sess-pay-provider"
-                      type="text"
-                      list="pay-provider-list"
-                      value={sessPayProvider}
-                      onChange={(e) => setSessPayProvider(e.target.value)}
-                      placeholder="Provider (or new)"
-                      className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
+                  <VariationSelectField
+                    id="sess-pay-provider"
+                    label="Provider Channel"
+                    value={sessPayProvider}
+                    onChange={setSessPayProvider}
+                    options={distinctPaymentProviders}
+                    placeholder="Custom provider..."
+                    required
+                  />
 
                   <div className="space-y-1.5">
                     <label htmlFor="sess-pay-exp" className="text-xs font-medium text-slate-300 block">
@@ -1749,52 +2164,149 @@ export const MainInterfaceTab: React.FC = () => {
                     </select>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <select
-                      aria-label="Customer for new session"
-                      value={walkinFoodCustId}
-                      onChange={(e) => setWalkinFoodCustId(e.target.value)}
-                      className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    >
-                      {customers.map((c) => (
-                        <option key={c.customer_id} value={c.customer_id}>
-                          #{c.customer_id} {c.first_name} {c.last_name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      aria-label="PC for new session"
-                      value={walkinFoodPcId}
-                      onChange={(e) => setWalkinFoodPcId(e.target.value)}
-                      className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    >
-                      {units.map((u) => (
-                        <option key={u.pc_id} value={u.pc_id}>
-                          {u.pc_number} ({u.status})
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      aria-label="Staff for new session"
-                      value={walkinFoodEmpId}
-                      onChange={(e) => setWalkinFoodEmpId(e.target.value)}
-                      className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    >
-                      {employees.map((emp) => (
-                        <option key={emp.employee_id} value={emp.employee_id}>
-                          {emp.first_name} {emp.last_name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={walkinFoodSessPrice}
-                      onChange={(e) => setWalkinFoodSessPrice(e.target.value)}
-                      placeholder="Session Fee (₱)"
-                      className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs font-mono text-white focus:border-blue-500 focus:outline-none"
-                    />
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-medium text-slate-300">Customer</span>
+                          <button
+                            type="button"
+                            onClick={() => setFoodCustMode(foodCustMode === 'existing' ? 'new' : 'existing')}
+                            className="text-[11px] text-blue-400 hover:text-blue-300"
+                          >
+                            {foodCustMode === 'existing' ? '+ New' : 'Cancel'}
+                          </button>
+                        </div>
+                        {foodCustMode === 'existing' ? (
+                          <select
+                            aria-label="Customer for new session"
+                            value={walkinFoodCustId}
+                            onChange={(e) => setWalkinFoodCustId(e.target.value)}
+                            className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          >
+                            {customers.map((c) => (
+                              <option key={c.customer_id} value={c.customer_id}>
+                                #{c.customer_id} {c.first_name} {c.last_name} ({c.membership})
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <input
+                                type="text"
+                                value={newFoodCustFirst}
+                                onChange={(e) => setNewFoodCustFirst(e.target.value)}
+                                placeholder="First *"
+                                className="rounded-lg border border-slate-800 bg-[#090d16] px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                                required
+                              />
+                              <input
+                                type="text"
+                                value={newFoodCustLast}
+                                onChange={(e) => setNewFoodCustLast(e.target.value)}
+                                placeholder="Last *"
+                                className="rounded-lg border border-slate-800 bg-[#090d16] px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                                required
+                              />
+                            </div>
+                            <VariationSelectField
+                              value={newFoodCustTier}
+                              onChange={setNewFoodCustTier}
+                              options={distinctMemberships}
+                              placeholder="Custom status..."
+                              variant="chips"
+                              required
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-medium text-slate-300">PC</span>
+                          <button
+                            type="button"
+                            onClick={() => setFoodPcMode(foodPcMode === 'existing' ? 'new' : 'existing')}
+                            className="text-[11px] text-blue-400 hover:text-blue-300"
+                          >
+                            {foodPcMode === 'existing' ? '+ New' : 'Cancel'}
+                          </button>
+                        </div>
+                        {foodPcMode === 'existing' ? (
+                          <select
+                            aria-label="PC for new session"
+                            value={walkinFoodPcId}
+                            onChange={(e) => setWalkinFoodPcId(e.target.value)}
+                            className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          >
+                            {foodCompatibleUnits.units.map((u) => (
+                              <option key={u.pc_id} value={u.pc_id}>
+                                {u.pc_number} · {u.type} ({u.status})
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="space-y-1.5">
+                            <input
+                              type="text"
+                              value={newFoodPcNumber}
+                              onChange={(e) => setNewFoodPcNumber(e.target.value)}
+                              placeholder="PC Number *"
+                              className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-2.5 py-1.5 text-xs font-mono text-white focus:border-blue-500 focus:outline-none"
+                              required
+                            />
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <VariationSelectField
+                                value={newFoodPcType}
+                                onChange={setNewFoodPcType}
+                                options={distinctUnitTypes}
+                                placeholder="PC Type..."
+                                required
+                              />
+                              <VariationSelectField
+                                value={newFoodPcLocation}
+                                onChange={setNewFoodPcLocation}
+                                options={distinctUnitLocations}
+                                placeholder="Location..."
+                                required
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <select
+                        aria-label="Staff for new session"
+                        value={walkinFoodEmpId}
+                        onChange={(e) => setWalkinFoodEmpId(e.target.value)}
+                        className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                      >
+                        {employees.map((emp) => (
+                          <option key={emp.employee_id} value={emp.employee_id}>
+                            {emp.first_name} {emp.last_name}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={walkinFoodSessPrice}
+                        onChange={(e) => setWalkinFoodSessPrice(e.target.value)}
+                        placeholder="Session Fee (₱)"
+                        className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs font-mono text-white focus:border-blue-500 focus:outline-none"
+                      />
+                      <VariationSelectField
+                        value={walkinFoodSessStatus}
+                        onChange={setWalkinFoodSessStatus}
+                        options={distinctSessionStatuses}
+                        placeholder="Session status..."
+                        required
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -1850,13 +2362,11 @@ export const MainInterfaceTab: React.FC = () => {
                       className="sm:col-span-2 rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
                       required
                     />
-                    <input
-                      type="text"
-                      list="prod-cat-list"
+                    <VariationSelectField
                       value={newFoodProdCategory}
-                      onChange={(e) => setNewFoodProdCategory(e.target.value)}
-                      placeholder="Category (or type new)"
-                      className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                      onChange={setNewFoodProdCategory}
+                      options={distinctCategories}
+                      placeholder="Custom category..."
                       required
                     />
                     <div className="grid grid-cols-2 gap-2">
@@ -2068,59 +2578,149 @@ export const MainInterfaceTab: React.FC = () => {
                     </select>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <select
-                      aria-label="Customer for walk-in payment"
-                      value={payWalkinCustId}
-                      onChange={(e) => setPayWalkinCustId(e.target.value)}
-                      className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    >
-                      {customers.map((c) => (
-                        <option key={c.customer_id} value={c.customer_id}>
-                          #{c.customer_id} {c.first_name} {c.last_name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      aria-label="PC for walk-in payment"
-                      value={payWalkinPcId}
-                      onChange={(e) => setPayWalkinPcId(e.target.value)}
-                      className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    >
-                      {units.map((u) => (
-                        <option key={u.pc_id} value={u.pc_id}>
-                          {u.pc_number} ({u.status})
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      aria-label="Staff for walk-in payment"
-                      value={payWalkinEmpId}
-                      onChange={(e) => setPayWalkinEmpId(e.target.value)}
-                      className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    >
-                      {employees.map((emp) => (
-                        <option key={emp.employee_id} value={emp.employee_id}>
-                          {emp.first_name} {emp.last_name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={payWalkinPrice}
-                      onChange={(e) => {
-                        setPayWalkinPrice(e.target.value);
-                        const v = parseFloat(e.target.value);
-                        if (!isNaN(v)) {
-                          setPayGross(v.toFixed(2));
-                          setPayExpenses((v * 0.35).toFixed(2));
-                        }
-                      }}
-                      placeholder="Session Price (₱)"
-                      className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs font-mono text-white focus:border-blue-500 focus:outline-none"
-                    />
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-medium text-slate-300">Customer</span>
+                          <button
+                            type="button"
+                            onClick={() => setPayCustMode(payCustMode === 'existing' ? 'new' : 'existing')}
+                            className="text-[11px] text-blue-400 hover:text-blue-300"
+                          >
+                            {payCustMode === 'existing' ? '+ New' : 'Cancel'}
+                          </button>
+                        </div>
+                        {payCustMode === 'existing' ? (
+                          <select
+                            aria-label="Customer for walk-in payment"
+                            value={payWalkinCustId}
+                            onChange={(e) => setPayWalkinCustId(e.target.value)}
+                            className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          >
+                            {customers.map((c) => (
+                              <option key={c.customer_id} value={c.customer_id}>
+                                #{c.customer_id} {c.first_name} {c.last_name} ({c.membership})
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <input
+                                type="text"
+                                value={newPayCustFirst}
+                                onChange={(e) => setNewPayCustFirst(e.target.value)}
+                                placeholder="First *"
+                                className="rounded-lg border border-slate-800 bg-[#090d16] px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                                required
+                              />
+                              <input
+                                type="text"
+                                value={newPayCustLast}
+                                onChange={(e) => setNewPayCustLast(e.target.value)}
+                                placeholder="Last *"
+                                className="rounded-lg border border-slate-800 bg-[#090d16] px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                                required
+                              />
+                            </div>
+                            <VariationSelectField
+                              value={newPayCustTier}
+                              onChange={setNewPayCustTier}
+                              options={distinctMemberships}
+                              placeholder="Custom status..."
+                              variant="chips"
+                              required
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-medium text-slate-300">PC</span>
+                          <button
+                            type="button"
+                            onClick={() => setPayPcMode(payPcMode === 'existing' ? 'new' : 'existing')}
+                            className="text-[11px] text-blue-400 hover:text-blue-300"
+                          >
+                            {payPcMode === 'existing' ? '+ New' : 'Cancel'}
+                          </button>
+                        </div>
+                        {payPcMode === 'existing' ? (
+                          <select
+                            aria-label="PC for walk-in payment"
+                            value={payWalkinPcId}
+                            onChange={(e) => setPayWalkinPcId(e.target.value)}
+                            className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                          >
+                            {payCompatibleUnits.units.map((u) => (
+                              <option key={u.pc_id} value={u.pc_id}>
+                                {u.pc_number} · {u.type} ({u.status})
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="space-y-1.5">
+                            <input
+                              type="text"
+                              value={newPayPcNumber}
+                              onChange={(e) => setNewPayPcNumber(e.target.value)}
+                              placeholder="PC Number *"
+                              className="w-full rounded-lg border border-slate-800 bg-[#090d16] px-2.5 py-1.5 text-xs font-mono text-white focus:border-blue-500 focus:outline-none"
+                              required
+                            />
+                            <div className="grid grid-cols-2 gap-1.5">
+                              <VariationSelectField
+                                value={newPayPcType}
+                                onChange={setNewPayPcType}
+                                options={distinctUnitTypes}
+                                placeholder="PC Type..."
+                                required
+                              />
+                              <VariationSelectField
+                                value={newPayPcLocation}
+                                onChange={setNewPayPcLocation}
+                                options={distinctUnitLocations}
+                                placeholder="Location..."
+                                required
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <select
+                        aria-label="Staff for walk-in payment"
+                        value={payWalkinEmpId}
+                        onChange={(e) => setPayWalkinEmpId(e.target.value)}
+                        className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                      >
+                        {employees.map((emp) => (
+                          <option key={emp.employee_id} value={emp.employee_id}>
+                            {emp.first_name} {emp.last_name}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={payWalkinPrice}
+                        onChange={(e) => {
+                          setPayWalkinPrice(e.target.value);
+                          const v = parseFloat(e.target.value);
+                          if (!isNaN(v)) {
+                            setPayGross(v.toFixed(2));
+                            setPayExpenses((v * 0.35).toFixed(2));
+                          }
+                        }}
+                        placeholder="Session Price (₱)"
+                        className="rounded-lg border border-slate-800 bg-[#090d16] px-3 py-2 text-xs font-mono text-white focus:border-blue-500 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -2149,41 +2749,29 @@ export const MainInterfaceTab: React.FC = () => {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="pay-method" className="text-xs font-medium text-slate-300 block">
-                    Payment Method
-                  </label>
-                  <input
-                    id="pay-method"
-                    type="text"
-                    list="pay-method-list"
-                    value={payMethod}
-                    onChange={(e) => {
-                      setPayMethod(e.target.value);
-                      const def = getDefaultProvider(e.target.value);
-                      if (def) setPayProvider(def);
-                    }}
-                    placeholder="Cash, GCash, or type new"
-                    className="w-full rounded-lg border border-slate-800 bg-[#060a12] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
+                <VariationSelectField
+                  id="pay-method"
+                  label="Payment Method"
+                  value={payMethod}
+                  onChange={(val) => {
+                    setPayMethod(val);
+                    const def = getDefaultProvider(val);
+                    if (def) setPayProvider(def);
+                  }}
+                  options={distinctPaymentMethods}
+                  placeholder="Custom method..."
+                  required
+                />
 
-                <div className="space-y-1.5">
-                  <label htmlFor="pay-provider" className="text-xs font-medium text-slate-300 block">
-                    Provider Channel
-                  </label>
-                  <input
-                    id="pay-provider"
-                    type="text"
-                    list="pay-provider-list"
-                    value={payProvider}
-                    onChange={(e) => setPayProvider(e.target.value)}
-                    placeholder="Provider (or type new)"
-                    className="w-full rounded-lg border border-slate-800 bg-[#060a12] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
+                <VariationSelectField
+                  id="pay-provider"
+                  label="Provider Channel"
+                  value={payProvider}
+                  onChange={setPayProvider}
+                  options={distinctPaymentProviders}
+                  placeholder="Custom provider..."
+                  required
+                />
 
                 <div className="space-y-1.5">
                   <label htmlFor="pay-date" className="text-xs font-medium text-slate-300 block">
@@ -2360,18 +2948,15 @@ export const MainInterfaceTab: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label htmlFor="cust-tier" className="text-xs font-medium text-slate-300 block">
-                    Membership Tier
-                  </label>
-                  <input
+                <div className="sm:col-span-2">
+                  <VariationSelectField
                     id="cust-tier"
-                    type="text"
-                    list="tier-list"
+                    label="Customer Status / Membership"
                     value={custMembership}
-                    onChange={(e) => setCustMembership(e.target.value)}
-                    placeholder="Select Regular/PRO/VIP or type a new tier"
-                    className="w-full rounded-lg border border-slate-800 bg-[#060a12] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                    onChange={setCustMembership}
+                    options={distinctMemberships}
+                    placeholder="Enter custom customer status"
+                    variant="chips"
                     required
                   />
                 </div>
@@ -2486,21 +3071,16 @@ export const MainInterfaceTab: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="emp-shift" className="text-xs font-medium text-slate-300 block">
-                    Assigned Shift
-                  </label>
-                  <input
-                    id="emp-shift"
-                    type="text"
-                    list="emp-shift-list"
-                    value={empShift}
-                    onChange={(e) => setEmpShift(e.target.value)}
-                    placeholder="Morning, Night, or type new"
-                    className="w-full rounded-lg border border-slate-800 bg-[#060a12] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
+                <VariationSelectField
+                  id="emp-shift"
+                  label="Assigned Shift"
+                  value={empShift}
+                  onChange={setEmpShift}
+                  options={distinctShifts}
+                  placeholder="Enter custom shift"
+                  variant="chips"
+                  required
+                />
 
                 <div className="space-y-1.5 sm:col-span-2">
                   <label htmlFor="emp-addr" className="text-xs font-medium text-slate-300 block">
@@ -2618,53 +3198,35 @@ export const MainInterfaceTab: React.FC = () => {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label htmlFor="unit-type" className="text-xs font-medium text-slate-300 block">
-                      Hardware Tier
-                    </label>
-                    <input
-                      id="unit-type"
-                      type="text"
-                      list="unit-type-list"
-                      value={unitType}
-                      onChange={(e) => setUnitType(e.target.value)}
-                      placeholder="Standard PC or type new"
-                      className="w-full rounded-lg border border-slate-800 bg-[#060a12] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                      required
-                    />
-                  </div>
+                  <VariationSelectField
+                    id="unit-type"
+                    label="Hardware Tier"
+                    value={unitType}
+                    onChange={setUnitType}
+                    options={distinctUnitTypes}
+                    placeholder="Enter custom hardware tier..."
+                    required
+                  />
 
-                  <div className="space-y-1.5">
-                    <label htmlFor="unit-location" className="text-xs font-medium text-slate-300 block">
-                      Area Location
-                    </label>
-                    <input
-                      id="unit-location"
-                      type="text"
-                      list="unit-loc-list"
-                      value={unitLocation}
-                      onChange={(e) => setUnitLocation(e.target.value)}
-                      placeholder="Main Floor or type new"
-                      className="w-full rounded-lg border border-slate-800 bg-[#060a12] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                      required
-                    />
-                  </div>
+                  <VariationSelectField
+                    id="unit-location"
+                    label="Area Location"
+                    value={unitLocation}
+                    onChange={setUnitLocation}
+                    options={distinctUnitLocations}
+                    placeholder="Enter custom area location..."
+                    required
+                  />
 
-                  <div className="space-y-1.5">
-                    <label htmlFor="unit-status" className="text-xs font-medium text-slate-300 block">
-                      Initial Status
-                    </label>
-                    <input
-                      id="unit-status"
-                      type="text"
-                      list="unit-status-list"
-                      value={unitStatus}
-                      onChange={(e) => setUnitStatus(e.target.value)}
-                      placeholder="Available or type custom"
-                      className="w-full rounded-lg border border-slate-800 bg-[#060a12] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                      required
-                    />
-                  </div>
+                  <VariationSelectField
+                    id="unit-status"
+                    label="Initial Status"
+                    value={unitStatus}
+                    onChange={setUnitStatus}
+                    options={distinctUnitStatuses}
+                    placeholder="Enter custom unit status..."
+                    required
+                  />
                 </div>
               )}
 
@@ -2685,21 +3247,15 @@ export const MainInterfaceTab: React.FC = () => {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label htmlFor="prod-cat" className="text-xs font-medium text-slate-300 block">
-                      Category
-                    </label>
-                    <input
-                      id="prod-cat"
-                      type="text"
-                      list="prod-cat-list"
-                      value={prodCategory}
-                      onChange={(e) => setProdCategory(e.target.value)}
-                      placeholder="Snacks, Drinks, or type new"
-                      className="w-full rounded-lg border border-slate-800 bg-[#060a12] px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                      required
-                    />
-                  </div>
+                  <VariationSelectField
+                    id="prod-cat"
+                    label="Category"
+                    value={prodCategory}
+                    onChange={setProdCategory}
+                    options={distinctCategories}
+                    placeholder="Enter custom category..."
+                    required
+                  />
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
