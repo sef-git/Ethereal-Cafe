@@ -100,7 +100,7 @@ export const UnitsTab: React.FC = () => {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            PC Fleet &amp; Floor Matrix
+            PC Stations &amp; Floor
           </h1>
         </div>
 
@@ -326,7 +326,7 @@ export const UnitsTab: React.FC = () => {
                       <div className="flex items-center justify-between text-slate-400 text-[11px]">
                         <span className="flex items-center gap-1">
                           <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
-                          Lifetime Revenue
+                          Total Sales
                         </span>
                         <span className="text-emerald-400 font-bold font-mono text-sm tabular-nums">
                           ₱{stats?.revenue.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
@@ -336,19 +336,19 @@ export const UnitsTab: React.FC = () => {
                       <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
                         <span className="text-slate-400">Total Run Time</span>
                         <span className="text-slate-200 font-mono">
-                          {stats?.hours.toFixed(1) || '0.0'} operating hrs
+                          {stats?.hours.toFixed(1) || '0.0'} hrs
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Hardware Specification Banner */}
+                  {/* Hardware Specs Banner */}
                   <div className="rounded-xl border border-cyan-500/20 bg-cyan-950/15 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <Cpu className="h-4 w-4 text-cyan-400 shrink-0" />
                       <div>
                         <span className="text-[10px] uppercase font-bold text-cyan-400 font-mono tracking-wider block">
-                          Hardware Configuration:
+                          PC Specs:
                         </span>
                         <span className="text-slate-200 font-medium text-xs font-mono">
                           {hardwareSpec}
@@ -358,17 +358,17 @@ export const UnitsTab: React.FC = () => {
 
                     <div className="text-right shrink-0">
                       <span className="text-[10px] text-slate-400 block font-mono">
-                        {stats?.sessions || 0} completed sessions
+                        {stats?.sessions || 0} sessions
                       </span>
                     </div>
                   </div>
 
-                  {/* Fleet Utilization Progress */}
+                  {/* PC Usage Score */}
                   <div className="space-y-1.5 font-mono text-[11px]">
                     <div className="flex items-center justify-between text-slate-400">
                       <span className="flex items-center gap-1">
                         <Activity className="h-3 w-3 text-blue-400" />
-                        Station Utilization Index
+                        Usage Score
                       </span>
                       <span className="text-cyan-300 font-bold">{utilizationPct}%</span>
                     </div>

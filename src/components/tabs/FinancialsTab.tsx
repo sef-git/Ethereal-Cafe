@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import {
   ResponsiveContainer,
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   XAxis,
@@ -166,7 +168,7 @@ export const FinancialsTab: React.FC = () => {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            Financials &amp; Earnings Intelligence
+            Sales &amp; Profit
           </h1>
         </div>
 
@@ -175,28 +177,28 @@ export const FinancialsTab: React.FC = () => {
           className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/80 px-3.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700 hover:text-white transition-colors"
         >
           <Download className="h-3.5 w-3.5 text-blue-400" />
-          <span>Export Audit CSV</span>
+          <span>Export CSV</span>
         </button>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">Gross Income (Total)</span>
+          <span className="text-xs text-slate-400">Total Income</span>
           <div className="mt-2 text-2xl font-bold font-mono text-white tabular-nums">
             ₱{totalGross.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
           <span className="mt-1 block text-[11px] text-slate-500 font-mono">
-            {earnings.length.toLocaleString()} verified audit cycles
+            {earnings.length.toLocaleString()} recorded entries
           </span>
         </div>
 
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">Operating Expenses</span>
+          <span className="text-xs text-slate-400">Expenses</span>
           <div className="mt-2 text-2xl font-bold font-mono text-rose-400 tabular-nums">
             ₱{totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
-          <span className="mt-1 block text-[11px] text-slate-500 font-mono">Electricity, bandwidth, maintenance</span>
+          <span className="mt-1 block text-[11px] text-slate-500 font-mono">Power, internet, upkeep</span>
         </div>
 
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
@@ -206,31 +208,113 @@ export const FinancialsTab: React.FC = () => {
           </div>
           <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-400 font-mono">
             <ArrowUpRight className="h-3 w-3" />
-            <span>Retained Operating Surplus</span>
+            <span>Earnings after expenses</span>
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">Net Profit Margin</span>
+          <span className="text-xs text-slate-400">Profit Margin</span>
           <div className="mt-2 text-2xl font-bold font-mono text-blue-400 tabular-nums">
             {profitMargin}%
           </div>
-          <span className="mt-1 block text-[11px] text-slate-500 font-mono">Highly optimized cafe unit economics</span>
+          <span className="mt-1 block text-[11px] text-slate-500 font-mono">Overall profit share</span>
         </div>
       </div>
 
       {/* Charts Section */}
       <div className="space-y-6">
-        {/* Daily Profit Breakdown - Full width desktop layout */}
+        {/* Income & Net Profit Trend (shifted from removed Overview tab) */}
+        <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4 shrink-0">
+            <div>
+              <h2 className="text-base font-semibold text-white tracking-tight">
+                Income &amp; Net Profit Trend
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">Daily income and profit over time</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <button
+                onClick={() => setSelectedGraph('overview_revenue')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+                <span>View Graph Details</span>
+              </button>
+              <div className="flex items-center gap-3.5 sm:gap-4.5 text-xs font-sans pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
+                <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
+                  Income
+                </span>
+                <span className="flex items-center gap-1.5 text-slate-200 font-medium">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+                  Net Profit
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dailyEarnings} margin={{ top: 12, right: 14, left: -10, bottom: 4 }}>
+                <defs>
+                  <linearGradient id="finGrossGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="finProfitGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+                <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} dy={4} />
+                <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `₱${val}`} />
+                <Tooltip
+                  cursor={false}
+                  contentStyle={{
+                    backgroundColor: '#0c1322',
+                    borderColor: '#1e293b',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    color: '#f8fafc',
+                  }}
+                  formatter={(val: any) => [
+                    val != null ? `₱${Number(val).toFixed(2)}` : '₱0.00',
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="gross"
+                  name="Total Income"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#finGrossGradient)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="profit"
+                  name="Net Profit"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#finProfitGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Daily Sales Breakdown */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 shadow-xl">
           {/* Header Controls & Metadata */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-800/70 mb-4">
             <div>
               <h2 className="text-base font-semibold text-white tracking-tight">
-                Daily Gross vs Expenses Breakdown
+                Daily Sales vs Expenses
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Stacked financial volume by day
+                Daily income compared against expenses
               </p>
             </div>
 
@@ -517,8 +601,8 @@ export const FinancialsTab: React.FC = () => {
       <div className="rounded-xl border border-slate-800/80 bg-[#090d16] overflow-hidden">
         <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-white">Earnings Ledger</h2>
-            <p className="text-xs text-slate-400">All registered ledger entries</p>
+            <h2 className="text-sm font-semibold text-white">Sales History</h2>
+            <p className="text-xs text-slate-400">All recorded sales and profit entries</p>
           </div>
           <div className="relative w-64">
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />

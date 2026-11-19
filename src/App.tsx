@@ -4,7 +4,6 @@ import { CafeDataProvider } from './context/CafeDataContext';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { MainPanelBuffer } from './components/common/MainPanelBuffer';
-import { OverviewTab } from './components/tabs/OverviewTab';
 import { UnitsTab } from './components/tabs/UnitsTab';
 import { SessionsTab } from './components/tabs/SessionsTab';
 import { FinancialsTab } from './components/tabs/FinancialsTab';
@@ -13,11 +12,22 @@ import { InventoryTab } from './components/tabs/InventoryTab';
 import { EmployeesTab } from './components/tabs/EmployeesTab';
 import { PythonAnalyticsTab } from './components/tabs/PythonAnalyticsTab';
 import { MainInterfaceTab } from './components/tabs/MainInterfaceTab';
+import { HomeTab } from './components/tabs/HomeTab';
+import { MikuTerminalModal } from './components/assistant/MikuTerminalModal';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [activeTab, setActiveTab] = useState<string>('home');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
+  const [isMikuOpen, setIsMikuOpen] = useState<boolean>(false);
+  const [mikuInitialPrompt, setMikuInitialPrompt] = useState<string | null>(null);
   const mainPanelRef = useRef<HTMLElement>(null);
+
+  const handleOpenMiku = (initialPrompt?: string) => {
+    if (initialPrompt) {
+      setMikuInitialPrompt(initialPrompt);
+    }
+    setIsMikuOpen(true);
+  };
 
   // Reset the position of the main panel to the very top when changing tabs on the control navigation panel
   useEffect(() => {
@@ -39,6 +49,7 @@ export default function App() {
           <Sidebar
             activeTab={activeTab}
             setActiveTab={setActiveTab}
+            onOpenMiku={() => handleOpenMiku()}
             isMobileOpen={isMobileNavOpen}
             onCloseMobile={() => setIsMobileNavOpen(false)}
           />
@@ -57,7 +68,9 @@ export default function App() {
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
                 >
-                  {activeTab === 'overview' && <OverviewTab />}
+                  {activeTab === 'home' && (
+                    <HomeTab onNavigateTab={setActiveTab} onOpenMiku={handleOpenMiku} />
+                  )}
                   {activeTab === 'main_interface' && <MainInterfaceTab />}
                   {activeTab === 'units' && <UnitsTab />}
                   {activeTab === 'sessions' && <SessionsTab />}
@@ -71,6 +84,14 @@ export default function App() {
             </MainPanelBuffer>
           </main>
         </div>
+
+        <MikuTerminalModal
+          isOpen={isMikuOpen}
+          onClose={() => setIsMikuOpen(false)}
+          onNavigateTab={setActiveTab}
+          initialPrompt={mikuInitialPrompt}
+          onClearInitialPrompt={() => setMikuInitialPrompt(null)}
+        />
       </div>
     </CafeDataProvider>
   );

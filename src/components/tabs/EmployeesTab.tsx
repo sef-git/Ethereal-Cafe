@@ -57,14 +57,14 @@ export const EmployeesTab: React.FC = () => {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            Staff &amp; Shift Operations
+            Staff &amp; Shifts
           </h1>
         </div>
 
         <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
-          <span className="text-blue-400">{employees.length} Staff on Roster</span>
+          <span className="text-blue-400">{employees.length} Staff Members</span>
           <span className="text-slate-600">·</span>
-          <span>Full Operations Team</span>
+          <span>Active Team</span>
         </div>
       </div>
 

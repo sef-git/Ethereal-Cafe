@@ -66,46 +66,46 @@ export const InventoryTab: React.FC = () => {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            Cafe Concessions &amp; Inventory Menu
+            Food, Drinks &amp; Stock
           </h1>
         </div>
 
         <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
           <span className="text-blue-400">{products.length} menu items</span>
           <span className="text-slate-600">·</span>
-          <span className="text-emerald-400">{sessionProducts.length} order line items</span>
+          <span className="text-emerald-400">{sessionProducts.length} orders</span>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">Total Concessions Revenue</span>
+          <span className="text-xs text-slate-400">Food &amp; Drink Sales</span>
           <div className="mt-2 text-2xl font-bold font-mono text-emerald-400 tabular-nums">
             ₱{totalConcessionRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
           <span className="mt-1 block text-[11px] text-slate-500 font-mono">
-            {sessionProducts.length} recorded session purchases
+            {sessionProducts.length} orders served
           </span>
         </div>
 
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">Current Warehouse Stock Valuation</span>
+          <span className="text-xs text-slate-400">Total Stock Value</span>
           <div className="mt-2 text-2xl font-bold font-mono text-white tabular-nums">
             ₱{totalInventoryValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </div>
           <span className="mt-1 block text-[11px] text-slate-500 font-mono">
-            Asset value across all categories
+            Value of items currently in stock
           </span>
         </div>
 
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4">
-          <span className="text-xs text-slate-400">Inventory Health Alerts</span>
+          <span className="text-xs text-slate-400">Low Stock Alerts</span>
           <div className="mt-2 text-2xl font-bold font-mono text-amber-400 tabular-nums">
             {lowStockCount} Low Stock
           </div>
           <span className="mt-1 block text-[11px] text-slate-500 font-mono">
-            Restock threshold &le; 30 units
+            30 or fewer units left
           </span>
         </div>
       </div>

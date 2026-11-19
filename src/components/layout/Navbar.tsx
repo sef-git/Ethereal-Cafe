@@ -8,14 +8,14 @@ interface NavbarProps {
 }
 
 const TAB_NAMES: Record<string, string> = {
-  overview: 'Executive Overview',
+  home: 'Home',
   main_interface: 'Cafe Log',
-  units: 'PC Fleet & Floor Matrix',
-  sessions: 'Gaming Sessions Log',
-  financials: 'Financials & Earnings',
-  customers: 'Customer Directory',
-  inventory: 'Cafe Concessions & Menu',
-  employees: 'Staff & Shift Roster',
+  units: 'PC Stations & Floor',
+  sessions: 'Gaming Sessions',
+  financials: 'Sales & Profit',
+  customers: 'Customers & Members',
+  inventory: 'Food, Drinks & Stock',
+  employees: 'Staff & Shifts',
   python_engine: 'Data Analysis',
 };
 
@@ -36,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onToggleMobileNav }) 
           </button>
         )}
 
-        <a href="#overview" className="flex items-center gap-2.5 text-base font-bold tracking-tight text-white">
+        <a href="#home" className="flex items-center gap-2.5 text-base font-bold tracking-tight text-white">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400">
             <Database className="h-4 w-4" />
           </div>

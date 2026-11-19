@@ -12,16 +12,31 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from 'recharts';
 import { useCafeData } from '../../context/CafeDataContext';
 import { Session } from '../../lib/supabase';
+import { GraphDetailsModal } from '../common/GraphDetailsModal';
+import { generateGraphReport } from '../../lib/graphReports';
 
 export const SessionsTab: React.FC = () => {
-  const { sessions, sessionProducts, payments } = useCafeData();
+  const { sessions, sessionProducts, payments, earnings, units, pythonAnalytics } = useCafeData();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [selectedGraph, setSelectedGraph] = useState<string | null>(null);
+
+  const hourlyData = pythonAnalytics?.hourly?.heatmap?.filter((_, idx) => idx % 2 === 0) || [];
 
   const pageSize = 25;
 
@@ -93,14 +108,58 @@ export const SessionsTab: React.FC = () => {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-5">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            Gaming Sessions Ledger
+            Gaming Sessions
           </h1>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
           <span className="text-blue-400">{filteredSessions.length} matching</span>
           <span className="text-slate-600">/</span>
-          <span>{sessions.length} total entries</span>
+          <span>{sessions.length} total sessions</span>
+        </div>
+      </div>
+
+      {/* Busiest Hours Distribution (shifted from removed Overview tab) */}
+      <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
+        <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/70 mb-4">
+          <div>
+            <h2 className="text-sm font-semibold text-white tracking-tight">Busiest Hours</h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Sessions by hour of day (00:00 - 23:00)
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="hidden sm:inline text-xs font-mono text-blue-400 font-semibold">
+              Busiest: {pythonAnalytics?.hourly?.peak_hour || '14:00'} ({pythonAnalytics?.hourly?.peak_session_count || 0} sessions)
+            </span>
+            <button
+              onClick={() => setSelectedGraph('overview_traffic')}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/50 hover:text-white text-xs transition-all font-medium shadow-sm shrink-0"
+            >
+              <Sparkles className="h-3 w-3 text-cyan-400" />
+              <span>View Graph Details</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="h-52 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={hourlyData} margin={{ top: 8, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" vertical={false} opacity={0.4} />
+              <XAxis dataKey="hour" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+              <Tooltip
+                cursor={false}
+                contentStyle={{
+                  backgroundColor: '#0c1322',
+                  borderColor: '#1e293b',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                }}
+              />
+              <Bar dataKey="sessions" name="Sessions" fill="#2563eb" stroke="none" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -152,7 +211,7 @@ export const SessionsTab: React.FC = () => {
                 <th className="py-3 px-4 font-medium">Session ID</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">PC Station</th>
-                <th className="py-3 px-4 font-medium">Duty Employee</th>
+                <th className="py-3 px-4 font-medium">Staff</th>
                 <th className="py-3 px-4 font-medium">Date</th>
                 <th className="py-3 px-4 font-medium">Duration</th>
                 <th className="py-3 px-4 font-medium text-right">Session Fee</th>
@@ -313,7 +372,7 @@ export const SessionsTab: React.FC = () => {
               </div>
 
               <div className="rounded-lg border border-slate-800/80 bg-[#060a12] p-3">
-                <span className="text-slate-500 block text-[11px]">Assigned Rig</span>
+                <span className="text-slate-500 block text-[11px]">PC Station</span>
                 <span className="font-mono font-bold text-blue-400 mt-1 block">
                   {selectedSession.units?.pc_number || `PC-${selectedSession.pc_id}`}
                 </span>
@@ -333,7 +392,7 @@ export const SessionsTab: React.FC = () => {
               </div>
 
               <div className="rounded-lg border border-slate-800/80 bg-[#060a12] p-3">
-                <span className="text-slate-500 block text-[11px]">Staff Overseer</span>
+                <span className="text-slate-500 block text-[11px]">Staff on Duty</span>
                 <span className="font-semibold text-slate-200 mt-1 block">
                   {selectedSession.employees
                     ? `${selectedSession.employees.first_name} ${selectedSession.employees.last_name}`
@@ -345,14 +404,14 @@ export const SessionsTab: React.FC = () => {
               </div>
             </div>
 
-            {/* Attached Concession Orders */}
+            {/* Attached Food & Drink Orders */}
             <div className="mt-5">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                   <Coffee className="h-3.5 w-3.5 text-blue-400" />
-                  <span>Cafe Orders Attached ({attachedProducts.length} items)</span>
+                  <span>Food &amp; Drink Orders ({attachedProducts.length} items)</span>
                 </h3>
-                <span className="text-[10px] font-mono text-slate-500">Supabase `session_products`</span>
+                <span className="text-[10px] font-mono text-slate-500">Order items</span>
               </div>
 
               {attachedProducts.length > 0 ? (
@@ -415,6 +474,19 @@ export const SessionsTab: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {selectedGraph && (
+        <GraphDetailsModal
+          report={generateGraphReport(selectedGraph, {
+            earnings,
+            sessions,
+            units,
+            payments,
+            pythonAnalytics,
+          })}
+          onClose={() => setSelectedGraph(null)}
+        />
       )}
     </div>
   );

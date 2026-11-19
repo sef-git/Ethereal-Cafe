@@ -356,15 +356,15 @@ export const PythonAnalyticsTab: React.FC = () => {
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>Regression Trajectory</span>
+              <span>Sales Trend</span>
               <TrendingUp className="h-3.5 w-3.5 text-blue-400" />
             </div>
             <div className="mt-2 text-xl font-bold font-mono text-blue-400 truncate">
-              {pythonAnalytics?.forecast?.trend_direction || 'Upward / Expansion'}
+              {pythonAnalytics?.forecast?.trend_direction || 'Upward / Growing'}
             </div>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-center justify-between">
-            <span>Growth Slope:</span>
+            <span>Growth Rate:</span>
             <span className="text-blue-300 font-semibold">
               {((pythonAnalytics?.forecast?.revenue_growth_slope ?? 0.07) >= 0 ? '+' : '')}
               {pythonAnalytics?.forecast?.revenue_growth_slope ?? '0.070'}
@@ -375,7 +375,7 @@ export const PythonAnalyticsTab: React.FC = () => {
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>Avg Session Duration</span>
+              <span>Avg Session Length</span>
               <Clock className="h-3.5 w-3.5 text-emerald-400" />
             </div>
             <div className="mt-2 text-xl font-bold font-mono text-white tabular-nums">
@@ -383,7 +383,7 @@ export const PythonAnalyticsTab: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-center justify-between">
-            <span>Std Deviation:</span>
+            <span>Typical Spread:</span>
             <span className="text-slate-300">&plusmn;{pythonAnalytics?.hourly?.stdev_duration_minutes || '85.0'} mins</span>
           </div>
         </div>
@@ -391,7 +391,7 @@ export const PythonAnalyticsTab: React.FC = () => {
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>Top Revenue Unit</span>
+              <span>Top Earning PC</span>
               <Cpu className="h-3.5 w-3.5 text-amber-400" />
             </div>
             <div className="mt-2 text-xl font-bold font-mono text-emerald-400">
@@ -399,7 +399,7 @@ export const PythonAnalyticsTab: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-center justify-between">
-            <span>Volume:</span>
+            <span>Total Sales:</span>
             <span className="text-emerald-400 font-semibold">₱{pythonAnalytics?.units?.top_pc_revenue?.toLocaleString() || '5,995'}</span>
           </div>
         </div>
@@ -407,15 +407,15 @@ export const PythonAnalyticsTab: React.FC = () => {
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>RFM VIP Champions</span>
+              <span>Top VIP Customers</span>
               <Users className="h-3.5 w-3.5 text-cyan-400" />
             </div>
             <div className="mt-2 text-xl font-bold font-mono text-cyan-400">
-              {rfmSegments['VIP Champion'] || 32} Patrons
+              {rfmSegments['VIP Champion'] || 32} Customers
             </div>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-center justify-between">
-            <span>Segment LTV:</span>
+            <span>Loyalty:</span>
             <span className="text-cyan-300 font-semibold">High Retention</span>
           </div>
         </div>
@@ -423,13 +423,13 @@ export const PythonAnalyticsTab: React.FC = () => {
 
       {/* Visual Analytics Graphs Grid (Row 1) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Graph 1: Hourly Demand Density */}
+        {/* Graph 1: Hourly Traffic */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4 shrink-0">
               <div>
-                <h2 className="text-sm font-semibold text-white tracking-tight">Hourly Demand Density (24-Hour Cycle)</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Computed distribution from live sessions table (00:00 to 23:00)</p>
+                <h2 className="text-sm font-semibold text-white tracking-tight">Hourly Traffic (24-Hour Cycle)</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Sessions by hour from 00:00 to 23:00</p>
               </div>
               <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
@@ -462,7 +462,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                     }}
                     formatter={(val: any, name: any) => [
                       String(name).toLowerCase().includes('revenue') ? `₱${Number(val).toFixed(2)}` : val,
-                      String(name).toLowerCase().includes('revenue') ? 'Revenue' : 'Sessions',
+                      String(name).toLowerCase().includes('revenue') ? 'Sales' : 'Sessions',
                     ]}
                   />
                   <Bar dataKey="sessions" name="Sessions Volume" fill="#3b82f6" stroke="none" radius={[3, 3, 0, 0]} />
@@ -471,20 +471,20 @@ export const PythonAnalyticsTab: React.FC = () => {
             </div>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
-            <span>Peak Hour Volume:</span>
+            <span>Busiest Hour:</span>
             <span className="text-blue-400 font-semibold">
               {pythonAnalytics?.hourly?.peak_session_count || 54} sessions ({pythonAnalytics?.hourly?.peak_hour || '22:00'})
             </span>
           </div>
         </div>
 
-        {/* Graph 2: 7-Day Statistical Revenue Projection */}
+        {/* Graph 2: 7-Day Sales Estimate */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4 shrink-0">
               <div>
-                <h2 className="text-sm font-semibold text-white tracking-tight">7-Day Statistical Revenue Projection</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Projected daily gross and net profit based on fitted parameters</p>
+                <h2 className="text-sm font-semibold text-white tracking-tight">7-Day Sales Estimate</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Estimated daily income and net profit for the next week</p>
               </div>
               <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
@@ -497,11 +497,11 @@ export const PythonAnalyticsTab: React.FC = () => {
                 <div className="flex items-center gap-3.5 sm:gap-4.5 text-xs font-sans pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
                   <span className="flex items-center gap-1.5 text-slate-200 font-medium">
                     <span className="h-2.5 w-2.5 rounded-full bg-blue-600 shadow-sm shadow-blue-500/50" />
-                    Gross
+                    Income
                   </span>
                   <span className="flex items-center gap-1.5 text-slate-200 font-medium">
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
-                    Net
+                    Profit
                   </span>
                 </div>
               </div>
@@ -525,14 +525,14 @@ export const PythonAnalyticsTab: React.FC = () => {
                       val != null ? `₱${Number(val).toFixed(2)}` : '₱0.00',
                     ]}
                   />
-                  <Bar dataKey="projected_gross" name="Projected Gross" fill="#2563eb" stroke="none" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="projected_net_profit" name="Projected Net" fill="#10b981" stroke="none" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="projected_gross" name="Est. Income" fill="#2563eb" stroke="none" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="projected_net_profit" name="Est. Profit" fill="#10b981" stroke="none" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
-            <span>Forecasted Profit Margin:</span>
+            <span>Estimated Profit Margin:</span>
             <span className="text-emerald-400 font-semibold">
               {pythonAnalytics?.forecast?.net_profit_margin_pct ?? 65.0}%
             </span>
@@ -542,13 +542,13 @@ export const PythonAnalyticsTab: React.FC = () => {
 
       {/* Visual Analytics Graphs Grid (Row 2) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Graph 3: Historical Trajectory vs Linear Growth Trend */}
+        {/* Graph 3: Past 14-Day Sales & Profit */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4 shrink-0">
               <div>
-                <h2 className="text-sm font-semibold text-white tracking-tight">Historical 14-Day Financial Trend</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Historical daily gross revenue and net profit curve</p>
+                <h2 className="text-sm font-semibold text-white tracking-tight">Past 14-Day Sales &amp; Profit</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Daily income and net profit over recent shifts</p>
               </div>
               <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
@@ -561,7 +561,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                 <div className="flex items-center gap-3.5 sm:gap-4.5 text-xs font-sans pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
                   <span className="flex items-center gap-1.5 text-slate-200 font-medium">
                     <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
-                    Gross
+                    Income
                   </span>
                   <span className="flex items-center gap-1.5 text-slate-200 font-medium">
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
@@ -602,7 +602,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                   <Area
                     type="monotone"
                     dataKey="gross"
-                    name="Daily Gross"
+                    name="Daily Income"
                     stroke="#3b82f6"
                     strokeWidth={2}
                     fill="url(#pyGrossGrad)"
@@ -620,20 +620,20 @@ export const PythonAnalyticsTab: React.FC = () => {
             </div>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
-            <span>Cumulative Sample Size:</span>
+            <span>Recorded Days:</span>
             <span className="text-white font-semibold">
-              {pythonAnalytics?.forecast?.sample_points || 140} recorded cycles
+              {pythonAnalytics?.forecast?.sample_points || 140} entries
             </span>
           </div>
         </div>
 
-        {/* Graph 4: Customer RFM Behavioral Segmentation */}
+        {/* Graph 4: Customer Loyalty Groups */}
         <div className="rounded-xl border border-slate-800/80 bg-[#090d16] p-5 flex flex-col justify-between">
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-800/70 mb-4 shrink-0">
               <div>
-                <h2 className="text-sm font-semibold text-white tracking-tight">Customer RFM Behavioral Cohorts</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Patron distribution by engagement tier</p>
+                <h2 className="text-sm font-semibold text-white tracking-tight">Customer Loyalty Groups</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Customers grouped by visit and spending activity</p>
               </div>
               <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <button
@@ -645,7 +645,7 @@ export const PythonAnalyticsTab: React.FC = () => {
                 </button>
                 <div className="flex items-center gap-1.5 text-xs text-slate-200 font-medium pl-3.5 sm:pl-4 border-l border-slate-800/80 pr-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50" />
-                  <span>Patrons</span>
+                  <span>Customers</span>
                 </div>
               </div>
             </div>
@@ -664,17 +664,17 @@ export const PythonAnalyticsTab: React.FC = () => {
                       borderRadius: '8px',
                       fontSize: '11px',
                     }}
-                    formatter={(val: any) => [`${val} Members`, 'Patron Count']}
+                    formatter={(val: any) => [`${val} Customers`, 'Count']}
                   />
-                  <Bar dataKey="count" name="Patrons" fill="#8b5cf6" stroke="none" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" name="Customers" fill="#8b5cf6" stroke="none" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
-            <span>Total Registered Patrons:</span>
+            <span>Total Registered Customers:</span>
             <span className="text-purple-300 font-semibold">
-              {pythonAnalytics?.rfm?.total_customers || 100} Profiles
+              {pythonAnalytics?.rfm?.total_customers || 100} Customers
             </span>
           </div>
         </div>
@@ -700,14 +700,14 @@ export const PythonAnalyticsTab: React.FC = () => {
             <Cpu className="h-4 w-4 text-blue-400" />
             <div>
               <h2 className="text-sm font-semibold text-white">
-                PC Fleet Utilization &amp; ROI Leaderboard (Top 8 Stations)
+                Top 8 Most Used PCs
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Ranked by cumulative session revenues and hardware operating hours
+                Ranked by total session sales and hours used
               </p>
             </div>
           </div>
-          <span className="text-xs font-mono text-slate-400">{units.length} Fleet Units</span>
+          <span className="text-xs font-mono text-slate-400">{units.length} Total PCs</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
