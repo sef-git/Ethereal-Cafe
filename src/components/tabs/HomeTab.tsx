@@ -148,7 +148,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onOpenMiku }) =
                 Welcome to Ethereal Cafe!
               </h2>
               <p className="text-sm sm:text-base font-medium text-cyan-300">
-                I&apos;m Hatsune Miku, ready to assist...Mikudayo~
+                I&apos;m Hatsune Miku! Ready to assist...Mikudayo~
               </p>
             </div>
           </div>

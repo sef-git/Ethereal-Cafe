@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onToggleMobileNav }) 
           className="flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-950/40 px-3 sm:px-3.5 py-1.5 text-xs font-medium text-blue-300 hover:border-blue-400/60 hover:bg-blue-900/50 hover:text-white transition-colors disabled:opacity-50 whitespace-nowrap shrink-0"
         >
           <RefreshCw className={`h-3.5 w-3.5 text-blue-400 ${loading ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">{loading ? 'Querying...' : 'Sync Live Supabase'}</span>
+          <span className="hidden sm:inline">{loading ? 'Querying...' : 'Sync Data'}</span>
           <span className="sm:hidden">{loading ? 'Syncing' : 'Sync'}</span>
         </button>
       </div>
