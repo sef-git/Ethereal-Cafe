@@ -19,6 +19,8 @@ import {
   askMikuWithFallback,
   enforceMikudayo,
 } from '../../lib/mikuAssistant';
+import { playMikuAudio } from '../../lib/mikuAudio';
+import { ClickableMikuImage } from '../common/ClickableMikuImage';
 
 interface TerminalMessage {
   id: string;
@@ -108,6 +110,9 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
           timestamp: formatTime(),
         },
       ]);
+      if (!initialPrompt?.trim()) {
+        playMikuAudio();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -156,6 +161,7 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
           timestamp: formatTime(),
         },
       ]);
+      playMikuAudio();
       setInput('');
       return;
     }
@@ -198,6 +204,7 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
       };
 
       setMessages((prev) => [...prev, mikuMsg]);
+      playMikuAudio();
     } finally {
       setIsThinking(false);
     }
@@ -242,6 +249,7 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
         timestamp: formatTime(),
       },
     ]);
+    playMikuAudio();
     inputRef.current?.focus();
   };
 
@@ -289,6 +297,7 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
         timestamp: formatTime(),
       };
       setMessages((prev) => [...prev, ackMsg]);
+      playMikuAudio();
       return;
     }
 
@@ -325,6 +334,7 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
         timestamp: formatTime(),
       };
       setMessages((prev) => [...prev, ackMsg]);
+      playMikuAudio();
       return;
     }
 
@@ -355,6 +365,7 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
         timestamp: formatTime(),
       };
       setMessages((prev) => [...prev, ackMsg]);
+      playMikuAudio();
     } catch {
       const errMsg: TerminalMessage = {
         id: `miku-qa-err-${Date.now()}`,
@@ -366,6 +377,7 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
         timestamp: formatTime(),
       };
       setMessages((prev) => [...prev, errMsg]);
+      playMikuAudio();
     } finally {
       setSyncingAction(false);
     }
@@ -479,14 +491,13 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
 
             return (
               <div key={msg.id} className="flex items-start gap-3">
-                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-[#090e1a] p-1 shrink-0 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={asset.src}
-                    alt={asset.alt}
-                    referrerPolicy="no-referrer"
-                    className="h-full w-full object-contain"
-                  />
-                </div>
+                <ClickableMikuImage
+                  src={asset.src}
+                  alt={asset.alt}
+                  referrerPolicy="no-referrer"
+                  wrapperClassName="h-14 w-14 sm:h-16 sm:w-16 shrink-0"
+                  noteSize="sm"
+                />
 
                 <div className="flex-1 min-w-0 rounded-xl border border-slate-800/90 bg-[#090d16] p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between gap-2 text-[11px]">
@@ -532,14 +543,13 @@ export const MikuTerminalModal: React.FC<MikuTerminalModalProps> = ({
 
           {isThinking && (
             <div className="flex items-start gap-3">
-              <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl bg-[#090e1a] p-1 shrink-0 flex items-center justify-center overflow-hidden">
-                <img
-                  src={MIKU_EMOTION_ASSETS.chat_helpful.src}
-                  alt={MIKU_EMOTION_ASSETS.chat_helpful.alt}
-                  referrerPolicy="no-referrer"
-                  className="h-full w-full object-contain"
-                />
-              </div>
+              <ClickableMikuImage
+                src={MIKU_EMOTION_ASSETS.chat_helpful.src}
+                alt={MIKU_EMOTION_ASSETS.chat_helpful.alt}
+                referrerPolicy="no-referrer"
+                wrapperClassName="h-14 w-14 sm:h-16 sm:w-16 shrink-0"
+                noteSize="sm"
+              />
               <div className="rounded-xl border border-slate-800/90 bg-[#090d16] px-4 py-3 flex items-center gap-2 text-xs text-cyan-300">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 <span>Hatsune Miku is thinking...</span>

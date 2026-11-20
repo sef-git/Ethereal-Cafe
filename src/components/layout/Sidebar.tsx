@@ -15,6 +15,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useCafeData } from '../../context/CafeDataContext';
+import { ClickableMikuImage } from '../common/ClickableMikuImage';
 
 interface SidebarProps {
   activeTab: string;
@@ -256,27 +257,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             <div className="flex items-center gap-2.5">
-              {/* Mascot & Status Icon Container (borderless) */}
+              {/* Mascot & Status Icon Container (transparent for Miku GIFs) */}
               <div
-                className={`relative h-12 w-12 rounded-xl overflow-hidden flex items-center justify-center shrink-0 p-0.5 transition-colors ${
-                  statusPhase === 'connected'
-                    ? 'bg-cyan-950/40'
-                    : statusPhase === 'connecting'
-                    ? 'bg-amber-950/40'
-                    : 'bg-rose-950/40'
+                className={`relative h-12 w-12 flex items-center justify-center shrink-0 transition-colors ${
+                  statusPhase === 'connecting'
+                    ? 'rounded-xl bg-amber-950/40 overflow-hidden p-0.5'
+                    : 'bg-transparent overflow-visible'
                 }`}
               >
                 {/* Phase 1: Green / Connected - Hatsune Miku */}
                 {statusPhase === 'connected' && (
-                  <img
+                  <ClickableMikuImage
                     src="/assets/miku-vocaloid.gif"
                     onError={(e) => {
                       e.currentTarget.src =
                         'https://media.tenor.com/ouQzDmgC9CwAAAAj/miku-vocaloid.gif';
                     }}
                     alt="Hatsune Miku"
-                    className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-200"
+                    wrapperClassName="h-full w-full"
                     loading="eager"
+                    noteSize="sm"
                   />
                 )}
 
@@ -292,7 +292,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* Phase 3: Red / No Connection - Ce2000 Sad Hatsune Miku GIF */}
                 {statusPhase === 'no_connection' && (
-                  <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-lg">
+                  <div className="relative w-full h-full flex items-center justify-center overflow-visible">
                     <div
                       className="tenor-gif-embed w-full h-full opacity-0 absolute inset-0 pointer-events-none"
                       data-postid="1327000440316577800"
@@ -305,15 +305,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       </a>
                       from <a href="https://tenor.com/search/ce2000-stickers">Ce2000 Stickers</a>
                     </div>
-                    <img
+                    <ClickableMikuImage
                       src="/assets/ce2000-sad.gif"
                       onError={(e) => {
                         e.currentTarget.src =
                           'https://media.tenor.com/Empz3qXbSAgAAAAC/ce2000-sad.gif';
                       }}
                       alt="No Connection - Ce2000 Sad Hatsune Miku"
-                      className="w-full h-full object-contain rounded-lg p-0.5"
+                      wrapperClassName="w-full h-full"
                       loading="eager"
+                      noteSize="sm"
                     />
                   </div>
                 )}

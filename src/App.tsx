@@ -14,6 +14,7 @@ import { PythonAnalyticsTab } from './components/tabs/PythonAnalyticsTab';
 import { MainInterfaceTab } from './components/tabs/MainInterfaceTab';
 import { HomeTab } from './components/tabs/HomeTab';
 import { MikuTerminalModal } from './components/assistant/MikuTerminalModal';
+import { playWelcomeMikuOnce } from './lib/mikuAudio';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
@@ -21,6 +22,10 @@ export default function App() {
   const [isMikuOpen, setIsMikuOpen] = useState<boolean>(false);
   const [mikuInitialPrompt, setMikuInitialPrompt] = useState<string | null>(null);
   const mainPanelRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    playWelcomeMikuOnce();
+  }, []);
 
   const handleOpenMiku = (initialPrompt?: string) => {
     if (initialPrompt) {

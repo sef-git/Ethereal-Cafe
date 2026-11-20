@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useCafeData } from '../../context/CafeDataContext';
 import { MIKU_EMOTION_ASSETS } from '../../lib/mikuAssistant';
+import { ClickableMikuImage } from '../common/ClickableMikuImage';
 
 interface HomeTabProps {
   onNavigateTab: (tabId: string) => void;
@@ -134,14 +135,13 @@ export const HomeTab: React.FC<HomeTabProps> = ({ onNavigateTab, onOpenMiku }) =
       <section className="rounded-xl border border-cyan-500/30 bg-[#090d16] px-5 py-4 sm:px-8 sm:py-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex-1 flex flex-col sm:flex-row items-center gap-5 sm:gap-7 min-w-0">
-            <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl bg-[#060a12] p-1 shrink-0 flex items-center justify-center overflow-hidden">
-              <img
-                src={mikuGreetingAsset.src}
-                alt={mikuGreetingAsset.alt}
-                referrerPolicy="no-referrer"
-                className="h-full w-full object-contain"
-              />
-            </div>
+            <ClickableMikuImage
+              src={mikuGreetingAsset.src}
+              alt={mikuGreetingAsset.alt}
+              referrerPolicy="no-referrer"
+              wrapperClassName="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 shrink-0"
+              noteSize="md"
+            />
 
             <div className="space-y-2 min-w-0 text-center sm:text-left">
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
